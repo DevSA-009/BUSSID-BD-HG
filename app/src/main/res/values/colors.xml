@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary brand blue — used for titles, buttons, EditText tint, spinner -->
+    <color name="primary_blue_devsa">#3E91FF</color>
+
+    <!-- App window background — near black -->
+    <color name="primary_bg_devsa">#131313</color>
+
+    <!-- Dialog card background — dark gray -->
+    <color name="primary_dark_devsa">#282828</color>
+
+    <!-- White text — body text, hints, button labels -->
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- Dim overlay behind dialogs -->
+    <color name="dialog_dim_overlay">#CC000000</color>
+</resources>

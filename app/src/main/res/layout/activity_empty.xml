@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Transparent background layout for ActivationActivity.
+    The Activity itself shows no content — all UI is in dialogs.
+    This file exists only because setContentView() requires a layout.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent"/>

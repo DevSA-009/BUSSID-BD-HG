@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        App theme — DayNight so system dark/light mode doesn't fight us.
+        NoActionBar — we don't want a top bar anywhere.
+        Window background is our near-black color.
+    -->
+    <style name="Theme.BUSSIDAuth" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/primary_bg_devsa</item>
+        <item name="colorPrimary">@color/primary_blue_devsa</item>
+        <item name="colorPrimaryVariant">@color/primary_blue_devsa</item>
+        <item name="colorOnPrimary">@color/text_white</item>
+        <item name="colorSurface">@color/primary_dark_devsa</item>
+        <item name="colorOnSurface">@color/text_white</item>
+        <item name="android:windowIsTranslucent">false</item>
+    </style>
+
+    <!--
+        Transparent window theme — used for ActivationActivity itself.
+        The activity has no visible background; only dialogs are visible.
+        This gives the "dialog-only" effect while activity is AppCompatActivity.
+    -->
+    <style name="Theme.BUSSIDAuth.Transparent" parent="Theme.BUSSIDAuth">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

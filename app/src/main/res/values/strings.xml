@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BUSSID BD</string>
+
+    <!-- Activation Dialog -->
+    <string name="activation_title">BUSSID BD অ্যাক্টিভেশন</string>
+    <string name="activation_hint">অ্যাক্টিভেশন কী দিন</string>
+    <string name="activation_btn">অ্যাক্টিভেট করুন</string>
+    <string name="activation_reset_link">অ্যাকাউন্ট রিসেট করুন</string>
+
+    <!-- Reset Dialog — own title/info, not shared with activation -->
+    <string name="reset_dialog_title">রিসেট কী দিন</string>
+    <string name="reset_dialog_info">ইমেইলে পাঠানো রিসেট কী টি নিচে লিখুন।</string>
+    <string name="reset_hint">রিসেট কী</string>
+    <string name="reset_btn">রিসেট করুন</string>
+
+    <!-- Progress -->
+    <string name="progress_checking_key">কী যাচাই করা হচ্ছে…</string>
+    <string name="progress_verifying">সার্ভার যাচাই করছে…</string>
+    <string name="progress_activating">অ্যাক্টিভেট হচ্ছে…</string>
+    <string name="progress_downloading">ডাউনলোড হচ্ছে…</string>
+    <string name="progress_applying">প্যাচ প্রয়োগ করা হচ্ছে…</string>
+    <string name="progress_resetting">রিসেট হচ্ছে…</string>
+    <string name="progress_checking_update">আপডেট চেক করা হচ্ছে…</string>
+
+    <!-- OBB / DLC -->
+    <string name="obb_title">OBB ফাইল প্রয়োজন</string>
+    <string name="obb_message">গেম চালানোর জন্য OBB ফাইলটি নির্বাচন করুন।</string>
+    <string name="obb_select_btn">OBB নির্বাচন করুন</string>
+    <string name="dlc_title">DLC ফাইল প্রয়োজন</string>
+    <string name="dlc_message">গেমের DLC ফাইলটি নির্বাচন করুন।</string>
+    <string name="dlc_select_btn">DLC নির্বাচন করুন</string>
+
+    <!-- Update -->
+    <string name="update_title">নতুন আপডেট পাওয়া গেছে!</string>
+    <string name="update_message">গেম সঠিকভাবে চালানোর জন্য নতুন OBB প্যাচ ডাউনলোড করতে হবে।</string>
+    <string name="update_btn">আপডেট করুন</string>
+
+    <!-- Report -->
+    <string name="report_title">বাগ রিপোর্ট করুন</string>
+    <string name="report_hint">সমস্যার বিবরণ লিখুন (কমপক্ষে ১০ অক্ষর)</string>
+    <string name="report_btn">পাঠান</string>
+
+    <!-- Common buttons -->
+    <string name="btn_cancel">বাতিল</string>
+    <string name="btn_close">বন্ধ করুন</string>
+    <string name="btn_exit_app">অ্যাপ বন্ধ করুন</string>
+    <string name="btn_ok">ঠিক আছে</string>
+    <string name="btn_retry">আবার চেষ্টা করুন</string>
+    <string name="btn_go_reset">রিসেট করুন</string>
+
+    <!-- Errors -->
+    <string name="err_key_invalid">কী পাওয়া যায়নি। ইমেইল চেক করুন।</string>
+    <string name="err_key_expired">আপনার অ্যাকাউন্টের মেয়াদ শেষ হয়ে গেছে।</string>
+    <string name="err_key_old_session">এই কী আর কার্যকর নেই। নতুন কী এর জন্য ইমেইল চেক করুন।</string>
+    <string name="err_server">সার্ভার সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।</string>
+    <string name="err_no_internet">ইন্টারনেট সংযোগ নেই।</string>
+    <string name="err_reset_failed">রিসেট ব্যর্থ হয়েছে। ইমেইল চেক করুন।</string>
+    <string name="err_ip_blocked">আপনার IP ব্লক হয়েছে। ২৪ ঘণ্টা পর চেষ্টা করুন।</string>
+    <string name="err_key_empty">অ্যাক্টিভেশন কী দিন।</string>
+    <string name="err_reset_key_empty">রিসেট কী দিন।</string>
+    <string name="err_download_failed">ডাউনলোড ব্যর্থ হয়েছে। আবার চেষ্টা করুন।</string>
+    <string name="err_report_short">বার্তা কমপক্ষে ১০ অক্ষর হতে হবে।</string>
+
+    <!-- Success -->
+    <string name="success_already_active_title">ইতোমধ্যে সক্রিয়</string>
+    <string name="success_already_active_msg">এই কী আগে থেকে ব্যবহৃত হয়েছে। রিসেট করতে চাইলে নিচের বাটনে চাপুন।</string>
+    <string name="success_reset_title">রিসেট সম্পন্ন!</string>
+    <string name="success_reset_msg">নতুন অ্যাক্টিভেশন কী এর জন্য আপনার ইমেইল চেক করুন।</string>
+    <string name="success_report_title">রিপোর্ট পাঠানো হয়েছে</string>
+    <string name="success_report_msg">আপনার রিপোর্ট অ্যাডমিনকে পাঠানো হয়েছে। ধন্যবাদ!</string>
+    <string name="success_update_title">আপডেট সম্পন্ন!</string>
+    <string name="success_update_msg">নতুন প্যাচ ইনস্টল হয়েছে।</string>
+</resources>
