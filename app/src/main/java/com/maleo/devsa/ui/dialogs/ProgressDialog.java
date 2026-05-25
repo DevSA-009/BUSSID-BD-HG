@@ -8,15 +8,19 @@ import android.widget.TextView;
 
 import com.maleo.bussidbdhg.R;
 
-/** Step-based progress dialog with optional download progress bar. */
+/**
+ * Step-based progress dialog with optional download progress bar.
+ */
 public class ProgressDialog extends BaseDialog {
 
-    private TextView    tvStep;
-    private TextView    tvSubStep;
-    private TextView    tvPercent;
+    private TextView tvStep;
+    private TextView tvSubStep;
+    private TextView tvPercent;
     private ProgressBar barDownload;
 
-    public ProgressDialog(Context context) { super(context); }
+    public ProgressDialog(Context context) {
+        super(context);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,9 +28,9 @@ public class ProgressDialog extends BaseDialog {
         setContentView(R.layout.dialog_progress);
         applyDimensions();
 
-        tvStep      = findViewById(R.id.tvProgressStep);
-        tvSubStep   = findViewById(R.id.tvProgressSubStep);
-        tvPercent   = findViewById(R.id.tvDownloadPercent);
+        tvStep = findViewById(R.id.tvProgressStep);
+        tvSubStep = findViewById(R.id.tvProgressSubStep);
+        tvPercent = findViewById(R.id.tvDownloadPercent);
         barDownload = findViewById(R.id.progressBarDownload);
     }
 

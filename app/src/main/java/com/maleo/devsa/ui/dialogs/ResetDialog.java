@@ -9,45 +9,44 @@ import android.widget.EditText;
 import com.maleo.bussidbdhg.R;
 
 /**
- * ResetDialog — Separate dedicated dialog for account reset.
- * Has its OWN layout (dialog_reset.xml) — does NOT reuse dialog_activation.xml.
- *
- * BUG FIXES vs previous version:
- *  - Cancel button ID changed from btnResetBack → btnResetCancel (matches layout)
- *  - Cancel button label is "বাতিল" set in strings.xml (was empty before)
- *  - Title in layout is "রিসেট কী দিন" — not repeated "অ্যাকাউন্ট রিসেট করুন"
+ * Reset dialog — single resetKey field, cancel + submit buttons.
  */
 public class ResetDialog extends BaseDialog {
 
-    public interface OnResetListener  { void onReset(String resetKey); }
-    public interface OnCancelListener { void onCancel(); }
+    public interface OnResetListener {
+        void onReset(String resetKey);
+    }
 
-    private final OnResetListener  onResetListener;
+    public interface OnCancelListener {
+        void onCancel();
+    }
+
+    private final OnResetListener onResetListener;
     private final OnCancelListener onCancelListener;
 
-    public ResetDialog(Context context,
-                       OnResetListener onResetListener,
-                       OnCancelListener onCancelListener) {
+    public ResetDialog(Context context, OnResetListener onReset, OnCancelListener onCancel) {
         super(context);
-        this.onResetListener  = onResetListener;
-        this.onCancelListener = onCancelListener;
+        this.onResetListener = onReset;
+        this.onCancelListener = onCancel;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.dialog_reset);   // own layout — not shared
+        setContentView(R.layout.dialog_reset);
         applyDimensions();
 
-        EditText etKey       = findViewById(R.id.etResetKey);
-        Button   btnCancel   = findViewById(R.id.btnResetCancel);   // fixed ID
-        Button   btnSubmit   = findViewById(R.id.btnResetSubmit);
+        EditText etKey = findViewById(R.id.etResetKey);
+        Button btnCancel = findViewById(R.id.btnResetCancel);
+        Button btnSubmit = findViewById(R.id.btnResetSubmit);
 
-        // Cancel → go back to activation dialog
+        // Explicitly set label — prevents empty button if layout has no hardcoded text
+        btnCancel.setText(R.string.btn_cancel);
+        btnSubmit.setText(R.string.reset_btn);
+
         btnCancel.setOnClickListener(v -> {
             if (onCancelListener != null) onCancelListener.onCancel();
         });
-
         btnSubmit.setOnClickListener(v -> {
             String key = etKey.getText().toString().trim();
             if (TextUtils.isEmpty(key)) {

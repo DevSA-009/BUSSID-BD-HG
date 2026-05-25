@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Night mode — same theme, our colors are already dark -->
+
     <style name="Theme.BUSSIDAuth" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/primary_bg_devsa</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowNoTitle">true</item>
         <item name="colorPrimary">@color/primary_blue_devsa</item>
         <item name="colorPrimaryVariant">@color/primary_blue_devsa</item>
         <item name="colorOnPrimary">@color/text_white</item>

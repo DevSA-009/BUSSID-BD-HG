@@ -1,4 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!--
+    Universal progress dialog — used for ALL processing:
+    DLC extract, Main OBB copy, Patch OBB download, Update download, server calls.
+
+    Shows ONLY:
+    1. Spinner
+    2. Main label (tvProgressStep) — e.g. "ডাউনলোড হচ্ছে…"
+    3. Sub label (tvProgressSubStep) — e.g. "অনুগ্রহ করে অপেক্ষা করুন"
+    4. Percent + bar (GONE by default, shown only during file download)
+
+    NO buttons — user cannot dismiss while processing.
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,17 +21,19 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="32dp">
+        android:padding="36dp">
 
+        <!-- Blue spinner -->
         <ProgressBar
             android:id="@+id/progressSpinner"
             style="@android:style/Widget.ProgressBar.Large"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
             android:indeterminate="true"
             android:indeterminateDrawable="@drawable/spinner_color_devsa"
-            android:layout_marginBottom="20dp"/>
+            android:layout_marginBottom="24dp" />
 
+        <!-- Main label — bold blue — e.g. "ডাউনলোড হচ্ছে…" -->
         <TextView
             android:id="@+id/tvProgressStep"
             android:layout_width="wrap_content"
@@ -29,17 +42,19 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginBottom="6dp"/>
+            android:layout_marginBottom="10dp" />
 
+        <!-- Sub label — small white — e.g. "অনুগ্রহ করে অপেক্ষা করুন" -->
         <TextView
             android:id="@+id/tvProgressSubStep"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#88FFFFFF"
+            android:textColor="#AAFFFFFF"
             android:textSize="12sp"
             android:gravity="center"
-            android:layout_marginBottom="20dp"/>
+            android:layout_marginBottom="20dp" />
 
+        <!-- Percent text — GONE unless file downloading -->
         <TextView
             android:id="@+id/tvDownloadPercent"
             android:layout_width="wrap_content"
@@ -49,8 +64,9 @@
             android:textStyle="bold"
             android:gravity="center"
             android:visibility="gone"
-            android:layout_marginBottom="10dp"/>
+            android:layout_marginBottom="10dp" />
 
+        <!-- Progress bar — GONE unless file downloading -->
         <ProgressBar
             android:id="@+id/progressBarDownload"
             style="@android:style/Widget.ProgressBar.Horizontal"
@@ -59,7 +75,7 @@
             android:progressDrawable="@drawable/progress_bar_blue"
             android:max="100"
             android:progress="0"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
     </LinearLayout>
 </ScrollView>

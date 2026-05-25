@@ -1,10 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-    Transparent background layout for ActivationActivity.
-    The Activity itself shows no content — all UI is in dialogs.
-    This file exists only because setContentView() requires a layout.
+<?xml version="1.0" encoding="utf-8"?><!--
+    ActivationActivity background — fullscreen dark (#131313).
+    Dialogs appear centered on top of this.
+    No transparent/floating — fills entire screen.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/transparent"/>
+    android:background="@color/primary_bg_devsa" />

@@ -1,118 +1,83 @@
 package com.maleo.devsa.util;
 
-/**
- * AppConfig — Central configuration file.
- *
- * HOW TO USE:
- * - To enable/disable extra security features, change the boolean flags below to true/false.
- * - To change server URL, update BASE_URL.
- * - Never hardcode these values anywhere else in the project.
- */
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.util.Log;
+
+import com.maleo.devsa.security.StringEncryptor;
+
 public final class AppConfig {
 
-    private AppConfig() {}
+    private static final String TAG = "BussidBD_Config";
 
-    // ─────────────────────────────────────────────
-    // SERVER
-    // ─────────────────────────────────────────────
+    private AppConfig() {
+    }
 
-    /** Base URL of the backend server. Change this when you deploy. */
-    public static final String BASE_URL = "http://10.0.2.2:5000";
-
-    // ─────────────────────────────────────────────
-    // NETWORK TIMEOUTS (seconds)
-    // ─────────────────────────────────────────────
-
+    // ── Server ────────────────────────────────────────────────────────────────
+//    public static final String BASE_URL = "http://10.0.2.2:5000";
+    public static final String BASE_URL = "https://bussid-bd-hexagon.vercel.app";
     public static final int CONNECT_TIMEOUT = 15;
-    public static final int READ_TIMEOUT    = 30;
-    public static final int WRITE_TIMEOUT   = 15;
+    public static final int READ_TIMEOUT = 30;
+    public static final int WRITE_TIMEOUT = 15;
 
-    // ─────────────────────────────────────────────
-    // OBB PROTECTION
-    // ─────────────────────────────────────────────
+    // ── DLC ───────────────────────────────────────────────────────────────────
+    public static final String DLC_ZIP_NAME = "dlc_bussidbdhg.zip";
 
-    /**
-     * The package name of the game whose OBB we protect.
-     * Used to build OBB directory path: /Android/obb/{GAME_PACKAGE}/
-     * Change this to match the actual game package name.
-     */
-    public static final String GAME_PACKAGE = "com.maleo.bussimulatorid";
+    // ── Hidden patch OBB seed (encrypted + dot-prefixed at runtime) ───────────
+    public static final String HIDDEN_OBB_SEED = "BUSSID_BD_HEXAGON_DEVSA";
 
-    /**
-     * Name of the OBB file inside the OBB directory.
-     * Usually: main.{versionCode}.{packageName}.obb
-     */
-    public static final String OBB_FILE_NAME = "main.1.com.maleo.bussimulatorid.obb";
+    // ── Intervals ─────────────────────────────────────────────────────────────
+    public static final long UPDATE_CHECK_INTERVAL_MS = (long) (2.5 * 60 * 60 * 1000);
+    public static final long REPORT_DIALOG_INTERVAL_MS = 24L * 60 * 60 * 1000;
 
-    /**
-     * Name of the DLC zip file placed by the user.
-     * This is extracted into the game's files directory.
-     */
-    public static final String DLC_ZIP_NAME = "dlc_bussidbd.zip";
-
-    // ─────────────────────────────────────────────
-    // SECURITY FEATURE FLAGS
-    // ─────────────────────────────────────────────
-    // Set these to true when ready to enable.
-    // Each flag is checked at runtime, so no recompile needed — just change and rebuild.
-
-    /**
-     * ROOT DETECTION
-     * If true: app checks if device is rooted. If rooted, shows warning and exits.
-     * Protects against users who modify app behavior with root tools (e.g. Lucky Patcher).
-     * Set to true when ready. Currently false — does nothing.
-     */
+    // ── Security flags ────────────────────────────────────────────────────────
     public static final boolean ENABLE_ROOT_DETECTION = false;
-
-    /**
-     * EMULATOR DETECTION
-     * If true: app blocks running on Android emulators.
-     * Emulators are often used to bypass license checks.
-     * Set to true when ready. Currently false — does nothing.
-     */
     public static final boolean ENABLE_EMULATOR_DETECTION = false;
-
-    /**
-     * ANTI-DEBUG
-     * If true: app checks if a debugger is attached at launch.
-     * If a debugger is found, the app exits immediately.
-     * Prevents reverse engineers from stepping through auth code.
-     * Set to true when ready. Currently false — does nothing.
-     */
     public static final boolean ENABLE_ANTI_DEBUG = false;
-
-    /**
-     * OBB INTEGRITY CHECK
-     * If true: before launching the game, the first 16 bytes of the OBB file
-     * are verified against expected values. Prevents tampered OBB files from running.
-     * Set to true when ready. Currently false — does nothing.
-     */
     public static final boolean ENABLE_OBB_INTEGRITY_CHECK = false;
-
-    /**
-     * APK SIGNATURE CHECK
-     * If true: at launch, the app verifies its own APK signing certificate.
-     * If someone repacks and signs the APK with a different key, the app exits.
-     * Protects against repackaged/cracked versions.
-     * Set to true and fill EXPECTED_SIGNATURE below when ready.
-     */
     public static final boolean ENABLE_SIGNATURE_CHECK = false;
-
-    /**
-     * Expected APK signature SHA-256 hash (hex string, lowercase, no colons).
-     * Run: keytool -printcert -jarfile your-release.apk
-     * and copy the SHA-256 value here (remove spaces and colons).
-     * Only used when ENABLE_SIGNATURE_CHECK = true.
-     */
     public static final String EXPECTED_SIGNATURE = "YOUR_APK_SIGNATURE_SHA256_HERE";
 
-    // ─────────────────────────────────────────────
-    // REPORT DIALOG — show once per day
-    // ─────────────────────────────────────────────
+    /**
+     * PATCH OBB FILE ENCRYPTION
+     * When true: patch OBB is AES-256 encrypted after damage, decrypted before repair.
+     * Key is stored in Android Keystore (hardware-backed).
+     * Set to true when ready — requires ENABLE_PATCH_OBB_ENCRYPTION = true at build time.
+     */
+    public static final boolean ENABLE_PATCH_OBB_ENCRYPTION = false;
+
+    // ── Dynamic OBB helpers ───────────────────────────────────────────────────
+
+    public static String getGamePackage(Context ctx) {
+        return ctx.getPackageName();
+    }
+
+    public static long getVersionCode(Context ctx) {
+        try {
+            android.content.pm.PackageInfo pi =
+                    ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0);
+            return android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P
+                    ? pi.getLongVersionCode() : pi.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "getVersionCode: " + e.getMessage());
+            return 1;
+        }
+    }
+
+    public static String getMainObbName(Context ctx) {
+        return "main." + getVersionCode(ctx) + "." + getGamePackage(ctx) + ".obb";
+    }
+
+    public static String getPatchObbName(Context ctx) {
+        return "patch." + getVersionCode(ctx) + "." + getGamePackage(ctx) + ".obb";
+    }
 
     /**
-     * How many hours after first game launch to show the report dialog.
-     * Default: 24 hours (1 day). User sees it once per day.
+     * Hidden patch OBB filename — dot-prefixed encrypted string.
+     * Example: ".4275535349445f42445f484558..."
+     * Dot prefix makes it hidden in file managers (Linux/Android convention).
      */
-    public static final int REPORT_DIALOG_INTERVAL_HOURS = 24;
+    public static String getHiddenObbName() {
+        return "." + StringEncryptor.encrypt(HIDDEN_OBB_SEED);
+    }
 }

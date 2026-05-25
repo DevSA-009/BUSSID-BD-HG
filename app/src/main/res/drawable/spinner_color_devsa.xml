@@ -20,7 +20,7 @@
             android:useLevel="false"
             android:startColor="#00ffffff"
             android:endColor="@color/primary_blue_devsa"
-            android:angle="0"/>
+            android:angle="0" />
 
     </shape>
 

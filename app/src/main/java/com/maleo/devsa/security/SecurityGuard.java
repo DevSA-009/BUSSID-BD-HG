@@ -13,28 +13,30 @@ import java.security.MessageDigest;
 
 /**
  * SecurityGuard — Optional security checks at app launch.
- *
+ * <p>
  * Each check is controlled by a boolean flag in AppConfig.
  * Set the flag to true in AppConfig when you want to enable it.
- *
+ * <p>
  * Currently all flags are false — these methods do nothing until you enable them.
- *
+ * <p>
  * Usage in ActivationActivity.onCreate():
- *   if (!SecurityGuard.runAllChecks(this)) { finish(); return; }
+ * if (!SecurityGuard.runAllChecks(this)) { finish(); return; }
  */
 public final class SecurityGuard {
 
-    private SecurityGuard() {}
+    private SecurityGuard() {
+    }
 
     /**
      * Run all enabled security checks.
+     *
      * @return true if all checks pass (app should continue), false if any check fails (app should exit).
      */
     public static boolean runAllChecks(Context context) {
-        if (AppConfig.ENABLE_ANTI_DEBUG       && isDebuggerAttached())    return false;
-        if (AppConfig.ENABLE_ROOT_DETECTION   && isRooted())              return false;
-        if (AppConfig.ENABLE_EMULATOR_DETECTION && isEmulator())          return false;
-        if (AppConfig.ENABLE_SIGNATURE_CHECK  && !isSignatureValid(context)) return false;
+        if (AppConfig.ENABLE_ANTI_DEBUG && isDebuggerAttached()) return false;
+        if (AppConfig.ENABLE_ROOT_DETECTION && isRooted()) return false;
+        if (AppConfig.ENABLE_EMULATOR_DETECTION && isEmulator()) return false;
+        if (AppConfig.ENABLE_SIGNATURE_CHECK && !isSignatureValid(context)) return false;
         return true;
     }
 
@@ -62,15 +64,15 @@ public final class SecurityGuard {
 
         // Check for su binary in common locations
         String[] paths = {
-            "/system/app/Superuser.apk",
-            "/sbin/su",
-            "/system/bin/su",
-            "/system/xbin/su",
-            "/data/local/xbin/su",
-            "/data/local/bin/su",
-            "/system/sd/xbin/su",
-            "/system/bin/failsafe/su",
-            "/data/local/su"
+                "/system/app/Superuser.apk",
+                "/sbin/su",
+                "/system/bin/su",
+                "/system/xbin/su",
+                "/data/local/xbin/su",
+                "/data/local/bin/su",
+                "/system/sd/xbin/su",
+                "/system/bin/failsafe/su",
+                "/data/local/su"
         };
         for (String path : paths) {
             if (new File(path).exists()) return true;
@@ -85,13 +87,13 @@ public final class SecurityGuard {
      */
     private static boolean isEmulator() {
         return Build.FINGERPRINT.startsWith("generic")
-            || Build.FINGERPRINT.startsWith("unknown")
-            || Build.MODEL.contains("google_sdk")
-            || Build.MODEL.contains("Emulator")
-            || Build.MODEL.contains("Android SDK built for x86")
-            || Build.MANUFACTURER.contains("Genymotion")
-            || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
-            || "google_sdk".equals(Build.PRODUCT);
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || "google_sdk".equals(Build.PRODUCT);
     }
 
     // ─── Signature Check ──────────────────────────────────────────────────────
@@ -105,18 +107,18 @@ public final class SecurityGuard {
             Signature[] sigs;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 sigs = context.getPackageManager()
-                    .getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES)
-                    .signingInfo.getApkContentsSigners();
+                        .getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES)
+                        .signingInfo.getApkContentsSigners();
             } else {
                 //noinspection deprecation
                 sigs = context.getPackageManager()
-                    .getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNATURES)
-                    .signatures;
+                        .getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNATURES)
+                        .signatures;
             }
             if (sigs == null || sigs.length == 0) return false;
 
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest    = md.digest(sigs[0].toByteArray());
+            byte[] digest = md.digest(sigs[0].toByteArray());
 
             // Convert to lowercase hex string
             StringBuilder hex = new StringBuilder();

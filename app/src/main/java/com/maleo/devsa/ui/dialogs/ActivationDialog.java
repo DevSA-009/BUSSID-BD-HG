@@ -15,10 +15,15 @@ import com.maleo.bussidbdhg.R;
  */
 public class ActivationDialog extends BaseDialog {
 
-    public interface OnActivateListener     { void onActivate(String key); }
-    public interface OnResetRequestListener { void onResetRequested(); }
+    public interface OnActivateListener {
+        void onActivate(String key);
+    }
 
-    private final OnActivateListener     activateListener;
+    public interface OnResetRequestListener {
+        void onResetRequested();
+    }
+
+    private final OnActivateListener activateListener;
     private final OnResetRequestListener resetListener;
 
     public ActivationDialog(Context context,
@@ -26,7 +31,7 @@ public class ActivationDialog extends BaseDialog {
                             OnResetRequestListener resetListener) {
         super(context);
         this.activateListener = activateListener;
-        this.resetListener    = resetListener;
+        this.resetListener = resetListener;
     }
 
     @Override
@@ -35,9 +40,9 @@ public class ActivationDialog extends BaseDialog {
         setContentView(R.layout.dialog_activation);
         applyDimensions(); // programmatic 75%w / 85%h centered
 
-        EditText etKey       = findViewById(R.id.etActivationKey);
-        Button   btnActivate = findViewById(R.id.btnActivate);
-        TextView tvReset     = findViewById(R.id.tvResetLink);
+        EditText etKey = findViewById(R.id.etActivationKey);
+        Button btnActivate = findViewById(R.id.btnActivate);
+        TextView tvReset = findViewById(R.id.tvResetLink);
 
         btnActivate.setOnClickListener(v -> {
             String key = etKey.getText().toString().trim();

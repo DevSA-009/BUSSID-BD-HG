@@ -21,13 +21,13 @@
             android:textSize="20sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@drawable/divider_blue"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp" />
 
         <TextView
             android:id="@+id/tvInfoMessage"
@@ -37,7 +37,7 @@
             android:textSize="14sp"
             android:gravity="center"
             android:lineSpacingExtra="4dp"
-            android:layout_marginBottom="28dp"/>
+            android:layout_marginBottom="28dp" />
 
         <Button
             android:id="@+id/btnInfoPrimary"
@@ -49,7 +49,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:paddingHorizontal="36dp"
-            android:layout_marginBottom="12dp"/>
+            android:layout_marginBottom="12dp" />
 
         <Button
             android:id="@+id/btnInfoSecondary"
@@ -60,7 +60,7 @@
             android:textColor="@color/primary_blue_devsa"
             android:textSize="14sp"
             android:paddingHorizontal="36dp"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
     </LinearLayout>
 </ScrollView>

@@ -8,11 +8,18 @@ import android.widget.EditText;
 
 import com.maleo.bussidbdhg.R;
 
-/** Bug report dialog — shown once per day. Cancel launches game without sending. */
+/**
+ * Bug report dialog — shown once per 24 hours. Cancel launches game without sending.
+ */
 public class ReportDialog extends BaseDialog {
 
-    public interface OnReportListener  { void onReport(String message); }
-    public interface OnCancelListener  { void onCancel(); }
+    public interface OnReportListener {
+        void onReport(String message);
+    }
+
+    public interface OnCancelListener {
+        void onCancel();
+    }
 
     private final OnReportListener onReport;
     private final OnCancelListener onCancel;
@@ -29,12 +36,17 @@ public class ReportDialog extends BaseDialog {
         setContentView(R.layout.dialog_report);
         applyDimensions();
 
-        EditText etMsg     = findViewById(R.id.etReportMessage);
-        Button   btnCancel = findViewById(R.id.btnReportCancel);
-        Button   btnSend   = findViewById(R.id.btnReportSend);
+        EditText etMsg = findViewById(R.id.etReportMessage);
+        Button btnCancel = findViewById(R.id.btnReportCancel);
+        Button btnSend = findViewById(R.id.btnReportSend);
 
-        btnCancel.setOnClickListener(v -> { if (onCancel != null) onCancel.onCancel(); });
+        // Explicitly set labels
+        btnCancel.setText(R.string.btn_cancel);
+        btnSend.setText(R.string.report_btn);
 
+        btnCancel.setOnClickListener(v -> {
+            if (onCancel != null) onCancel.onCancel();
+        });
         btnSend.setOnClickListener(v -> {
             String msg = etMsg.getText().toString().trim();
             if (TextUtils.isEmpty(msg) || msg.length() < 10) {

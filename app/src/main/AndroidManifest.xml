@@ -2,19 +2,33 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Network permissions -->
+    <!-- Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Storage permissions for OBB read/write -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
+    <!--
+        READ_EXTERNAL_STORAGE:
+        Only needed on Android 9 (API 28) and below to read user-selected OBB file.
+        Android 10+ uses Storage Access Framework (SAF) — no permission needed.
+        android:maxSdkVersion="28" ensures this is NOT requested on modern devices.
+
+        WRITE_EXTERNAL_STORAGE is intentionally NOT included:
+        - Deprecated since API 29 (Android 10)
+        - Removed/ignored since API 33 (Android 13)
+        - getObbDir() and getExternalFilesDir() work WITHOUT this permission.
+    -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="36"
+        tools:ignore="ScopedStorage" />
 
     <application
-        android:usesCleartextTraffic="true"
+        android:name="com.maleo.devsa.BussidApp"
         android:allowBackup="false"
+        android:usesCleartextTraffic="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -22,19 +36,19 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BUSSIDAuth"
-        tools:targetApi="35">
+        tools:targetApi="31">
 
         <!--
-            ActivationActivity — entry point of the app.
-            Handles all auth dialogs before launching Unity.
-            Uses AppCompatActivity so Material dialogs work correctly.
+            ActivationActivity — app entry point.
+            AppCompatActivity — needed for Material dialogs.
+            Theme.BUSSIDAuth.Transparent — activity itself is invisible; only dialogs show.
         -->
         <activity
             android:name="com.maleo.devsa.ui.ActivationActivity"
+            android:theme="@style/Theme.BUSSIDAuth"
             android:screenOrientation="landscape"
             android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            tools:ignore="DiscouragedApi">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -42,18 +56,18 @@
         </activity>
 
         <!--
-            UnityPlayerActivity — the game itself.
-            Extends android.app.Activity (NOT AppCompatActivity) — Unity requirement.
-            Handles OBB protection via lifecycle events.
+            UnityPlayerActivity — the game.
+            MUST extend plain android.app.Activity (NOT AppCompatActivity).
         -->
         <activity
             android:name="com.unity3d.player.UnityPlayerActivity"
             android:screenOrientation="landscape"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density"
             android:hardwareAccelerated="false"
-            android:launchMode="singleTask"
-            tools:ignore="DiscouragedApi">
-            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+            android:launchMode="singleTask">
+            <meta-data
+                android:name="unityplayer.UnityActivity"
+                android:value="true" />
         </activity>
 
     </application>

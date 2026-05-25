@@ -2,6 +2,7 @@ package com.maleo.devsa.security;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
@@ -16,22 +17,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * ObbPatcher — Copies OBB and extracts DLC zip.
- *
- * STORAGE APPROACH (modern Android, no deprecated permissions):
- *
- *  OBB directory:
- *    Android 10+ (API 29+): Use getObbDir() — app-specific path, no permission required.
- *    Android 9 and below  : Fall back to Environment.getExternalStorageDirectory() path.
- *    WRITE_EXTERNAL_STORAGE is NOT used. It's deprecated on API 29+ and removed on 33+.
- *
- *  Reading user-selected files:
- *    Via ContentResolver.openInputStream(Uri) — works with SAF (Storage Access Framework).
- *    No READ_EXTERNAL_STORAGE needed because the user explicitly granted access via the picker.
- *
- *  DLC extraction:
- *    Written to getExternalFilesDir() — app-private external directory.
- *    No permission required on any Android version.
+ * ObbPatcher — Copy main OBB + extract DLC from user-selected files.
+ * Patch OBB download is handled by ApiService.downloadFile() + ObbProtector.
  */
 public class ObbPatcher {
 
@@ -39,81 +26,83 @@ public class ObbPatcher {
 
     public interface PatchCallback {
         void onProgress(int percent);
+
         void onSuccess();
+
         void onError(String reason);
     }
 
-    private final Context context;
+    private final Context ctx;
 
-    public ObbPatcher(Context context) {
-        this.context = context.getApplicationContext();
+    public ObbPatcher(Context ctx) {
+        this.ctx = ctx.getApplicationContext();
     }
 
-    // ─── OBB Copy ────────────────────────────────────────────────────────────
+    // ── Main OBB copy ─────────────────────────────────────────────────────────
 
     /**
-     * Copy OBB from user-selected URI to the game's OBB directory.
-     * Call on a background thread.
-     *
-     * Why no WRITE_EXTERNAL_STORAGE:
-     *   getObbDir() returns a path the system grants this app without any permission.
-     *   On API < 29 we use the legacy path but still don't need the manifest permission
-     *   because Android grants write access to /Android/obb/{packageName}/ automatically.
+     * Copy user-selected OBB URI → /Android/obb/{pkg}/main.ver.pkg.obb
+     * After copy: rename to OBB_MAIN_FILE_NAME (no temp needed — it's a local copy).
      */
-    public void copyObb(Uri sourceUri, PatchCallback callback) {
-        File obbDir = resolveObbDirectory();
+    public void copyMainObb(Uri sourceUri, PatchCallback callback) {
+        File obbDir = resolveObbDir();
         if (!obbDir.exists() && !obbDir.mkdirs()) {
-            callback.onError("OBB ফোল্ডার তৈরি করা যায়নি: " + obbDir.getAbsolutePath());
+            callback.onError("OBB ফোল্ডার তৈরি করা যায়নি");
             return;
         }
+        String mainName = AppConfig.getMainObbName(ctx);
+        File dest = new File(obbDir, mainName);
+        Log.d(TAG, "copyMainObb → " + dest.getAbsolutePath());
 
-        File destination = new File(obbDir, AppConfig.OBB_FILE_NAME);
-        Log.d(TAG, "copyObb → destination: " + destination.getAbsolutePath());
-
-        try (InputStream in = context.getContentResolver().openInputStream(sourceUri)) {
-            if (in == null) { callback.onError("ফাইল খোলা যায়নি"); return; }
-
-            // Get approximate size for progress (may return -1 for some URIs)
-            long size = getUriFileSize(sourceUri);
-            copyStream(in, destination, size, callback);
-            Log.d(TAG, "copyObb ← success: " + destination.length() + " bytes");
+        try (InputStream in = ctx.getContentResolver().openInputStream(sourceUri)) {
+            if (in == null) {
+                callback.onError("ফাইল খোলা যায়নি");
+                return;
+            }
+            long size = getUriSize(sourceUri);
+            copyStream(in, dest, size, callback);
+            Log.d(TAG, "copyMainObb ← success: " + dest.length() + " bytes");
             callback.onSuccess();
         } catch (IOException e) {
-            Log.e(TAG, "copyObb error: " + e.getMessage());
-            callback.onError("কপি ব্যর্থ: " + e.getMessage());
+            Log.e(TAG, "copyMainObb error: " + e.getMessage());
+            if (dest.exists()) dest.delete();
+            callback.onError("কপি ব্যর্থ");
         }
     }
 
-    // ─── DLC Extraction ──────────────────────────────────────────────────────
+    /**
+     * Check if main OBB already exists.
+     */
+    public boolean isMainObbPresent() {
+        return new File(resolveObbDir(), AppConfig.getMainObbName(ctx)).exists();
+    }
+
+    // ── DLC extraction ────────────────────────────────────────────────────────
 
     /**
-     * Extract DLC zip into the game's external files directory.
-     * Call on a background thread.
-     * getExternalFilesDir() requires NO permission on any Android version.
+     * Extract DLC zip from user-selected URI into getExternalFilesDir().
      */
     public void extractDlc(Uri zipUri, PatchCallback callback) {
-        File outDir = context.getExternalFilesDir(null);
+        File outDir = ctx.getExternalFilesDir(null);
         if (outDir == null) {
-            callback.onError("এক্সটার্নাল স্টোরেজ পাওয়া যায়নি");
+            callback.onError("স্টোরেজ পাওয়া যায়নি");
             return;
         }
-        Log.d(TAG, "extractDlc → outDir: " + outDir.getAbsolutePath());
+        Log.d(TAG, "extractDlc → " + outDir.getAbsolutePath());
 
-        try (InputStream   raw = context.getContentResolver().openInputStream(zipUri);
+        try (InputStream raw = ctx.getContentResolver().openInputStream(zipUri);
              ZipInputStream zis = new ZipInputStream(raw)) {
 
             ZipEntry entry;
             int count = 0;
             while ((entry = zis.getNextEntry()) != null) {
                 File outFile = new File(outDir, entry.getName());
-
                 // Zip-slip protection
                 if (!outFile.getCanonicalPath().startsWith(outDir.getCanonicalPath() + File.separator)) {
                     Log.w(TAG, "zip-slip blocked: " + entry.getName());
                     zis.closeEntry();
                     continue;
                 }
-
                 if (entry.isDirectory()) {
                     outFile.mkdirs();
                 } else {
@@ -122,65 +111,74 @@ public class ObbPatcher {
                 }
                 zis.closeEntry();
                 count++;
-                if (callback != null) callback.onProgress(Math.min(count * 5, 95));
+                callback.onProgress(Math.min(count * 5, 95));
             }
-
-            Log.d(TAG, "extractDlc ← success: " + count + " entries");
+            Log.d(TAG, "extractDlc ← " + count + " entries");
             callback.onSuccess();
         } catch (IOException e) {
             Log.e(TAG, "extractDlc error: " + e.getMessage());
-            callback.onError("এক্সট্র্যাক্ট ব্যর্থ: " + e.getMessage());
+            callback.onError("এক্সট্র্যাক্ট ব্যর্থ");
         }
     }
-
-    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     /**
-     * Resolve OBB directory using the recommended modern approach.
-     *
-     * API 29+ : context.getObbDir() returns /Android/obb/{packageName}/  (no permission needed)
-     * API < 29: legacy path via Environment (write permission auto-granted for own package dir)
+     * Check if DLC zip marker exists.
      */
-    private File resolveObbDirectory() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            // Modern: use app's own OBB dir — no storage permission required
-            // Note: we need the GAME's OBB path, not this app's. Build it manually.
-            File base = context.getObbDir(); // e.g. /sdcard/Android/obb/com.maleo.bussimulatorsa/
-            // Navigate up two levels (obb/) then into game package folder
-            return new File(base.getParentFile(), AppConfig.GAME_PACKAGE);
-        } else {
-            // Legacy path for Android 9 and below
-            return new File(
-                Environment.getExternalStorageDirectory(),
-                "Android/obb/" + AppConfig.GAME_PACKAGE
-            );
+    public boolean isDlcPresent() {
+        File dlcMarker = new File(ctx.getExternalFilesDir(null), AppConfig.DLC_ZIP_NAME + ".done");
+        return dlcMarker.exists();
+    }
+
+    /**
+     * Mark DLC as installed.
+     */
+    public void markDlcInstalled() {
+        try {
+            File marker = new File(ctx.getExternalFilesDir(null), AppConfig.DLC_ZIP_NAME + ".done");
+            marker.createNewFile();
+        } catch (IOException ignored) {
         }
     }
 
-    private long getUriFileSize(Uri uri) {
-        try (android.database.Cursor cursor = context.getContentResolver().query(
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private File resolveObbDir() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return new File(ctx.getObbDir().getParentFile(), AppConfig.getGamePackage(ctx));
+        } else {
+            return new File(Environment.getExternalStorageDirectory(),
+                    "Android/obb/" + AppConfig.getGamePackage(ctx));
+        }
+    }
+
+    private long getUriSize(Uri uri) {
+        try (android.database.Cursor c = ctx.getContentResolver().query(
                 uri, new String[]{android.provider.OpenableColumns.SIZE}, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int idx = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE);
-                if (idx >= 0) return cursor.getLong(idx);
+            if (c != null && c.moveToFirst()) {
+                int idx = c.getColumnIndex(android.provider.OpenableColumns.SIZE);
+                if (idx >= 0) return c.getLong(idx);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return -1;
     }
 
-    private void copyStream(InputStream in, File dest, long totalBytes, PatchCallback callback)
+    private void copyStream(InputStream in, File dest, long total, PatchCallback cb)
             throws IOException {
         try (OutputStream out = new FileOutputStream(dest)) {
-            byte[] buf     = new byte[8192];
-            long   copied  = 0;
-            int    read;
-            int    lastPct = -1;
+            byte[] buf = new byte[8192];
+            long copied = 0;
+            int read;
+            int last = -1;
             while ((read = in.read(buf)) != -1) {
                 out.write(buf, 0, read);
                 copied += read;
-                if (totalBytes > 0 && callback != null) {
-                    int pct = (int) (copied * 100L / totalBytes);
-                    if (pct != lastPct) { lastPct = pct; callback.onProgress(pct); }
+                if (total > 0 && cb != null) {
+                    int pct = (int) (copied * 100L / total);
+                    if (pct != last) {
+                        last = pct;
+                        cb.onProgress(pct);
+                    }
                 }
             }
         }

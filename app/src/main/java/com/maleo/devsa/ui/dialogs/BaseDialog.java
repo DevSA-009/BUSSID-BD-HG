@@ -13,16 +13,16 @@ import com.maleo.bussidbdhg.R;
 
 /**
  * BaseDialog — Parent for all dialogs.
- *
+ * <p>
  * SIZE (programmatic — not static):
- *   Width  = 75% of screen width
- *   Height = 85% of screen height (WRAP_CONTENT capped — dialog won't exceed this)
- *   Gravity = CENTER (horizontal + vertical)
- *
+ * Width  = 75% of screen width
+ * Height = 85% of screen height (WRAP_CONTENT capped — dialog won't exceed this)
+ * Gravity = CENTER (horizontal + vertical)
+ * <p>
  * Other enforcements:
- *   - Outside click DISABLED (setCancelable false)
- *   - No title bar
- *   - Transparent window background so card drawable (#282828 + rounded corners) shows correctly
+ * - Outside click DISABLED (setCancelable false)
+ * - No title bar
+ * - Transparent window background so card drawable (#282828 + rounded corners) shows correctly
  */
 public abstract class BaseDialog extends Dialog {
 
@@ -54,8 +54,8 @@ public abstract class BaseDialog extends Dialog {
 
         // Apply size
         WindowManager.LayoutParams lp = window.getAttributes();
-        lp.width   = dialogW;
-        lp.height  = dialogH;          // fixed max height — dialog scrolls internally if needed
+        lp.width = dialogW;
+        lp.height = dialogH;          // fixed max height — dialog scrolls internally if needed
         lp.gravity = Gravity.CENTER;   // center both horizontally AND vertically
         window.setAttributes(lp);
     }
