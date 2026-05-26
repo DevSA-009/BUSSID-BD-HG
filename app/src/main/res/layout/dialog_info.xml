@@ -57,7 +57,7 @@
             android:layout_height="48dp"
             android:layout_gravity="center_horizontal"
             android:background="@drawable/devsa_rounded_shape_dialog"
-            android:textColor="@color/primary_blue_devsa"
+            android:textColor="@color/text_white"
             android:textSize="14sp"
             android:paddingHorizontal="36dp"
             android:visibility="gone" />

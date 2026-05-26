@@ -54,7 +54,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/devsa_rounded_shape_dialog"
                 android:text="@string/btn_cancel"
-                android:textColor="@color/primary_blue_devsa"
+                android:textColor="@color/text_white"
                 android:textSize="14sp"
                 android:layout_marginEnd="10dp" />
 

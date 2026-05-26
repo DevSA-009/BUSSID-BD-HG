@@ -1,4 +1,4 @@
-package com.maleo.devsa.security;
+package com.maleo.devsa.ui.dialogs;
 
 import android.content.Context;
 import android.net.Uri;
@@ -80,7 +80,8 @@ public class ObbPatcher {
     // ── DLC extraction ────────────────────────────────────────────────────────
 
     /**
-     * Extract DLC zip from user-selected URI into getExternalFilesDir().
+     * Extract DLC zip from user-selected URI into getFilesDir() (internal storage).
+     * getFilesDir() = /data/data/{packageName}/files/ — no permission needed, always writable.
      */
     public void extractDlc(Uri zipUri, PatchCallback callback) {
         File outDir = ctx.getFilesDir();
@@ -125,7 +126,7 @@ public class ObbPatcher {
      * Check if DLC zip marker exists.
      */
     public boolean isDlcPresent() {
-        File dlcMarker = new File(ctx.getExternalFilesDir(null), AppConfig.DLC_ZIP_NAME + ".done");
+        File dlcMarker = new File(ctx.getFilesDir(), AppConfig.DLC_ZIP_NAME + ".done");
         return dlcMarker.exists();
     }
 
@@ -134,7 +135,7 @@ public class ObbPatcher {
      */
     public void markDlcInstalled() {
         try {
-            File marker = new File(ctx.getExternalFilesDir(null), AppConfig.DLC_ZIP_NAME + ".done");
+            File marker = new File(ctx.getFilesDir(), AppConfig.DLC_ZIP_NAME + ".done");
             marker.createNewFile();
         } catch (IOException ignored) {
         }
