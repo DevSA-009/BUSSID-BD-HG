@@ -4,7 +4,7 @@
 
     Shows ONLY:
     1. Spinner
-    2. Main label (tvProgressStep) — e.g. "ডাউনলোড হচ্ছে…"
+    2. Main label (tvProgressStep) — e.g. "খোজা হচ্ছে…"
     3. Sub label (tvProgressSubStep) — e.g. "অনুগ্রহ করে অপেক্ষা করুন"
     4. Percent + bar (GONE by default, shown only during file download)
 
@@ -33,7 +33,7 @@
             android:indeterminateDrawable="@drawable/spinner_color_devsa"
             android:layout_marginBottom="24dp" />
 
-        <!-- Main label — bold blue — e.g. "ডাউনলোড হচ্ছে…" -->
+        <!-- Main label — bold blue — e.g. "খোজা হচ্ছে…" -->
         <TextView
             android:id="@+id/tvProgressStep"
             android:layout_width="wrap_content"

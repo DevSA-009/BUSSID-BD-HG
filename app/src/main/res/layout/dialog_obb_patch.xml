@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-    OBB / DLC file selection dialog.
-    Shows: title, message, select button.
-    When processing starts: button GONE (hidden completely), replaced by progress spinner + two labels.
-    No percent bar here — use ProgressDialog for downloads.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Unified file operation dialog.
+    layoutIdle       — idle mode: title, message, select button
+    layoutProcessing — processing mode: spinner, two labels, progress bar
+    Only one is visible at a time.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -17,48 +18,56 @@
         android:gravity="center"
         android:padding="28dp">
 
-        <!-- Title -->
-        <TextView
-            android:id="@+id/tvObbTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textColor="@color/primary_blue_devsa"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@drawable/divider_blue"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Message -->
-        <TextView
-            android:id="@+id/tvObbMessage"
+        <!-- ── IDLE MODE ──────────────────────────────────────── -->
+        <LinearLayout
+            android:id="@+id/layoutIdle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_white"
-            android:textSize="14sp"
+            android:orientation="vertical"
             android:gravity="center"
-            android:lineSpacingExtra="4dp"
-            android:layout_marginBottom="24dp" />
+            android:visibility="visible">
 
-        <!-- Select button — GONE while processing -->
-        <Button
-            android:id="@+id/btnObbSelect"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:layout_gravity="center_horizontal"
-            android:background="@drawable/devsa_rounded_shape"
-            android:textColor="@color/text_white"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:paddingHorizontal="36dp" />
+            <TextView
+                android:id="@+id/tvObbTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textColor="@color/primary_blue_devsa"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="16dp"/>
 
-        <!-- Processing state — GONE until user picks file -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@drawable/divider_blue"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:id="@+id/tvObbMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_white"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:layout_marginBottom="24dp"/>
+
+            <Button
+                android:id="@+id/btnObbSelect"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/devsa_rounded_shape"
+                android:textColor="@color/text_white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="36dp"/>
+
+        </LinearLayout>
+
+        <!-- ── PROCESSING MODE ────────────────────────────────── -->
         <LinearLayout
             android:id="@+id/layoutProcessing"
             android:layout_width="match_parent"
@@ -67,34 +76,46 @@
             android:gravity="center"
             android:visibility="gone">
 
+            <!-- Blue spinner -->
             <ProgressBar
-                android:id="@+id/patchSpinner"
                 style="@android:style/Widget.ProgressBar.Large"
-                android:layout_width="52dp"
-                android:layout_height="52dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:indeterminate="true"
                 android:indeterminateDrawable="@drawable/spinner_color_devsa"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="20dp"/>
 
-            <!-- Main label — e.g. "ফাইল কপি হচ্ছে…" -->
+            <!-- Main label — bold blue -->
             <TextView
                 android:id="@+id/tvPatchStep"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/primary_blue_devsa"
-                android:textSize="15sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="8dp"/>
 
-            <!-- Sub label — e.g. "অনুগ্রহ করে অপেক্ষা করুন" -->
+            <!-- Sub label — small white -->
             <TextView
                 android:id="@+id/tvPatchSubStep"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#AAFFFFFF"
                 android:textSize="12sp"
-                android:gravity="center" />
+                android:gravity="center"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Progress bar — shown during file operations -->
+            <ProgressBar
+                android:id="@+id/progressPatch"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="10dp"
+                android:progressDrawable="@drawable/progress_bar_blue"
+                android:max="100"
+                android:progress="0"
+                android:visibility="gone"/>
 
         </LinearLayout>
 
