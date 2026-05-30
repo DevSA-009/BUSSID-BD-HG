@@ -1,6 +1,5 @@
 package com.maleo.devsa.network;
 
-import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
@@ -38,7 +37,9 @@ public class ApiService {
 
     // Response constants
     public static final String RESP_VALID = "valid";
-    public static final String RESP_INVALID = "invalid";
+
+    public static final String RESP_SUCC = "success";
+    public static final String RESP_LIMIT = "limit";
     public static final String RESP_ACTIVATED = "activated";
     public static final String RESP_AACT = "aact";
     public static final String RESP_NE = "ne";
@@ -63,14 +64,14 @@ public class ApiService {
     }
 
     // ── Device payload ────────────────────────────────────────────────────────
-    private JSONObject devicePayload(Context ctx, String patchVer) {
+    private JSONObject devicePayload() {
         JSONObject root = new JSONObject();
         JSONObject dev = new JSONObject();
         try {
             dev.put("brand", Build.BRAND);
             dev.put("model", Build.MODEL);
             dev.put("androidVersion", Build.VERSION.RELEASE);
-            dev.put("obbPatchVersion", patchVer);
+            dev.put("obbPatchVersion", "0.0");
             root.put("device", dev);
         } catch (JSONException ignored) {
         }
@@ -112,9 +113,9 @@ public class ApiService {
      * body: { key, device{} }
      * → "activated"|"aact"|"ne"|"exp"|"inv"|RESP_NO_INTERNET|RESP_SERVER_ERROR
      */
-    public String verifyKey(Context ctx, String key, String patchVer) {
+    public String verifyKey(String key) {
         String url = AppConfig.BASE_URL + "/user/verify";
-        JSONObject payload = devicePayload(ctx, patchVer);
+        JSONObject payload = devicePayload();
         try {
             payload.put("key", key.trim());
         } catch (JSONException ignored) {
@@ -174,9 +175,9 @@ public class ApiService {
      * body: { key, device{} }
      * response (plain): PATCH_URL---#GUID_OFFSET--ASSET_OFFSET---#VERSION | error
      */
-    public PatchInfo getPatchInfo(Context ctx, String key, String patchVer) {
+    public PatchInfo getPatchInfo(String key) {
         String url = AppConfig.BASE_URL + "/user/patch";
-        JSONObject payload = devicePayload(ctx, patchVer);
+        JSONObject payload = devicePayload();
         try {
             payload.put("key", key.trim());
         } catch (JSONException ignored) {
@@ -239,7 +240,6 @@ public class ApiService {
 
             JSONObject data = parsed.optJSONObject("data");
             if (data == null) return null;
-
             return new UpdateInfo(
                     data.optString("version", "unknown"),
                     data.optString("patchUrl", ""),
@@ -271,7 +271,7 @@ public class ApiService {
     /**
      * POST /user/report  body: { activationKey, message }
      */
-    public boolean reportIssue(String activationKey, String message) {
+    public void reportIssue(String activationKey, String message) {
         String url = AppConfig.BASE_URL + "/user/report";
         JSONObject json = new JSONObject();
         try {
@@ -286,10 +286,9 @@ public class ApiService {
         try (Response res = ApiClient.get().newCall(req).execute()) {
             String raw = res.body() != null ? res.body().string().trim() : "";
             logResp(url, raw);
-            return new JSONObject(raw).optBoolean("success", false);
+            new JSONObject(raw).optBoolean("success", false);
         } catch (IOException | JSONException e) {
             logErr(url, e);
-            return false;
         }
     }
 

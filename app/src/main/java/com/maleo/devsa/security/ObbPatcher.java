@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
+import com.maleo.bussidbdhg.R;
 import com.maleo.devsa.util.AppConfig;
 
 import java.io.File;
@@ -20,32 +21,38 @@ import java.util.zip.ZipInputStream;
 
 /**
  * ObbPatcher — Copy main OBB + extract DLC zip.
- *
+ * <p>
  * DLC PERSISTENCE:
- *  After extraction, a reference file is created in getFilesDir().
- *  Reference file name = StringEncryptor.encrypt("dlc_bussidbdhg.zip.done")  [obfuscated]
- *  Reference file content = total bytes of getFilesDir()/assetpacks/ directory
- *
- *  CHECK (isDlcPresent):
- *  1. Find encrypted reference file name
- *  2. Read stored bytes value
- *  3. Calculate current assetpacks/ directory bytes
- *  4. current >= stored → DLC ok
- *     current <  stored → DLC incomplete/corrupted → show DLC dialog
+ * After extraction, a reference file is created in getFilesDir().
+ * Reference file name = StringEncryptor.encrypt("dlc_bussidbdhg.zip.done")  [obfuscated]
+ * Reference file content = total bytes of getFilesDir()/assetpacks/ directory
+ * <p>
+ * CHECK (isDlcPresent):
+ * 1. Find encrypted reference file name
+ * 2. Read stored bytes value
+ * 3. Calculate current assetpacks/ directory bytes
+ * 4. current >= stored → DLC ok
+ * current <  stored → DLC incomplete/corrupted → show DLC dialog
  */
 public class ObbPatcher {
 
     private static final String TAG = "BussidBD_Patcher";
 
-    /** Seed for encrypted DLC reference filename. */
+    /**
+     * Seed for encrypted DLC reference filename.
+     */
     private static final String DLC_REF_SEED = "dlc_bussidbdhg.zip.done";
 
-    /** DLC content directory inside getFilesDir(). */
+    /**
+     * DLC content directory inside getFilesDir().
+     */
     private static final String ASSET_PACKS_DIR = "assetpacks";
 
     public interface PatchCallback {
         void onProgress(int percent);
+
         void onSuccess();
+
         void onError(String reason);
     }
 
@@ -64,13 +71,17 @@ public class ObbPatcher {
     public void copyMainObb(Uri sourceUri, PatchCallback callback) {
         File obbDir = resolveObbDir();
         if (!obbDir.exists() && !obbDir.mkdirs()) {
-            callback.onError("OBB ফোল্ডার তৈরি করা যায়নি"); return;
+            callback.onError(ctx.getString(R.string.err_obb_folder_create_failed));
+            return;
         }
         File dest = new File(obbDir, AppConfig.getMainObbName(ctx));
         Log.d(TAG, "copyMainObb → " + dest.getAbsolutePath());
 
         try (InputStream in = ctx.getContentResolver().openInputStream(sourceUri)) {
-            if (in == null) { callback.onError("ফাইল খোলা যায়নি"); return; }
+            if (in == null) {
+                callback.onError(ctx.getString(R.string.err_file_open_failed));
+                return;
+            }
             long size = getUriSize(sourceUri);
             copyStream(in, dest, size, callback);
             Log.d(TAG, "copyMainObb ← " + dest.length() + " bytes");
@@ -78,7 +89,7 @@ public class ObbPatcher {
         } catch (IOException e) {
             Log.e(TAG, "copyMainObb: " + e.getMessage());
             if (dest.exists()) dest.delete();
-            callback.onError("কপি ব্যর্থ");
+            callback.onError(ctx.getString(R.string.obb_error));
         }
     }
 
@@ -97,7 +108,7 @@ public class ObbPatcher {
         File outDir = ctx.getFilesDir();
         Log.d(TAG, "extractDlc → " + outDir.getAbsolutePath());
 
-        try (InputStream    raw = ctx.getContentResolver().openInputStream(zipUri);
+        try (InputStream raw = ctx.getContentResolver().openInputStream(zipUri);
              ZipInputStream zis = new ZipInputStream(raw)) {
 
             ZipEntry entry;
@@ -107,7 +118,8 @@ public class ObbPatcher {
                 // Zip-slip protection
                 if (!outFile.getCanonicalPath().startsWith(outDir.getCanonicalPath() + File.separator)) {
                     Log.w(TAG, "zip-slip blocked: " + entry.getName());
-                    zis.closeEntry(); continue;
+                    zis.closeEntry();
+                    continue;
                 }
                 if (entry.isDirectory()) {
                     outFile.mkdirs();
@@ -126,7 +138,7 @@ public class ObbPatcher {
             callback.onSuccess();
         } catch (IOException e) {
             Log.e(TAG, "extractDlc: " + e.getMessage());
-            callback.onError("এক্সট্র্যাক্ট ব্যর্থ");
+            callback.onError(ctx.getString(R.string.dlc_error));
         }
     }
 
@@ -137,29 +149,29 @@ public class ObbPatcher {
      * 3. Compare with current assetpacks/ bytes
      * current >= stored → ok; current < stored → needs re-patch
      */
-    public boolean isDlcPresent() {
+    public boolean isDlcPatchNeeded() {
         File refFile = getDlcRefFile();
         if (!refFile.exists()) {
-            Log.d(TAG, "isDlcPresent: reference file not found");
-            return false;
+            Log.d(TAG, "isDlcPatchNeeded: reference file not found");
+            return true;
         }
 
         long storedBytes = readDlcReference(refFile);
         if (storedBytes <= 0) {
-            Log.w(TAG, "isDlcPresent: invalid stored bytes");
-            return false;
+            Log.w(TAG, "isDlcPatchNeeded: invalid stored bytes");
+            return true;
         }
 
         File assetPacksDir = new File(ctx.getFilesDir(), ASSET_PACKS_DIR);
         if (!assetPacksDir.exists()) {
-            Log.d(TAG, "isDlcPresent: assetpacks dir missing");
-            return false;
+            Log.d(TAG, "isDlcPatchNeeded: assetpacks dir missing");
+            return true;
         }
 
         long currentBytes = calculateDirBytes(assetPacksDir);
-        Log.d(TAG, "isDlcPresent: stored=" + storedBytes + " current=" + currentBytes);
+        Log.d(TAG, "isDlcPatchNeeded: stored=" + storedBytes + " current=" + currentBytes);
 
-        return currentBytes >= storedBytes;
+        return currentBytes < storedBytes;
     }
 
     // ── Reference file helpers ────────────────────────────────────────────────
@@ -171,7 +183,7 @@ public class ObbPatcher {
      */
     private void writeDlcReference() {
         File assetPacksDir = new File(ctx.getFilesDir(), ASSET_PACKS_DIR);
-        long totalBytes    = assetPacksDir.exists() ? calculateDirBytes(assetPacksDir) : 0;
+        long totalBytes = assetPacksDir.exists() ? calculateDirBytes(assetPacksDir) : 0;
 
         File refFile = getDlcRefFile();
         try (FileOutputStream fos = new FileOutputStream(refFile)) {
@@ -184,13 +196,14 @@ public class ObbPatcher {
 
     private long readDlcReference(File refFile) {
         try (FileInputStream fis = new FileInputStream(refFile)) {
-            byte[] buf  = new byte[32];
-            int    read = fis.read(buf);
+            byte[] buf = new byte[32];
+            int read = fis.read(buf);
             if (read <= 0) return -1;
             String content = new String(buf, 0, read, StandardCharsets.UTF_8).trim();
             return Long.parseLong(content);
         } catch (Exception e) {
-            Log.e(TAG, "readDlcReference: " + e.getMessage()); return -1;
+            Log.e(TAG, "readDlcReference: " + e.getMessage());
+            return -1;
         }
     }
 
@@ -200,7 +213,9 @@ public class ObbPatcher {
         return new File(ctx.getFilesDir(), encName);
     }
 
-    /** Recursively calculate total bytes of all files in a directory. */
+    /**
+     * Recursively calculate total bytes of all files in a directory.
+     */
     private long calculateDirBytes(File dir) {
         long total = 0;
         File[] files = dir.listFiles();
@@ -219,7 +234,7 @@ public class ObbPatcher {
             return new File(ctx.getObbDir().getParentFile(), AppConfig.getGamePackage(ctx));
         } else {
             return new File(Environment.getExternalStorageDirectory(),
-                            "Android/obb/" + AppConfig.getGamePackage(ctx));
+                    "Android/obb/" + AppConfig.getGamePackage(ctx));
         }
     }
 
@@ -230,20 +245,27 @@ public class ObbPatcher {
                 int idx = c.getColumnIndex(android.provider.OpenableColumns.SIZE);
                 if (idx >= 0) return c.getLong(idx);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return -1;
     }
 
     private void copyStream(InputStream in, File dest, long total, PatchCallback cb)
             throws IOException {
         try (OutputStream out = new FileOutputStream(dest)) {
-            byte[] buf   = new byte[8192];
-            long   copied= 0; int read; int last = -1;
+            byte[] buf = new byte[8192];
+            long copied = 0;
+            int read;
+            int last = -1;
             while ((read = in.read(buf)) != -1) {
-                out.write(buf, 0, read); copied += read;
+                out.write(buf, 0, read);
+                copied += read;
                 if (total > 0 && cb != null) {
-                    int pct = (int)(copied * 100L / total);
-                    if (pct != last) { last = pct; cb.onProgress(pct); }
+                    int pct = (int) (copied * 100L / total);
+                    if (pct != last) {
+                        last = pct;
+                        cb.onProgress(pct);
+                    }
                 }
             }
         }

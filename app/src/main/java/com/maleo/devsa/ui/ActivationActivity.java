@@ -33,12 +33,11 @@ import java.util.concurrent.Executors;
 
 public class ActivationActivity extends AppCompatActivity {
 
+    private final Handler ui = new Handler(Looper.getMainLooper());
     private SecurePrefs prefs;
     private ApiService api;
     private ObbPatcher patcher;
     private ObbProtector protector;
-
-    private final Handler ui = new Handler(Looper.getMainLooper());
     private ExecutorService bg;
 
     // Active dialogs — all dismissed in onDestroy to prevent WindowLeaked
@@ -49,20 +48,18 @@ public class ActivationActivity extends AppCompatActivity {
 
     private Uri pendingObbUri;
     private Uri pendingDlcUri;
-
-    private final ActivityResultLauncher<String> obbPicker = registerForActivityResult(
-            new ActivityResultContracts.GetContent(), uri -> {
-                if (uri != null) {
-                    pendingObbUri = uri;
-                    handleObbPicked();
-                }
-            });
-
     private final ActivityResultLauncher<String> dlcPicker = registerForActivityResult(
             new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
                     pendingDlcUri = uri;
                     handleDlcPicked();
+                }
+            });
+    private final ActivityResultLauncher<String> obbPicker = registerForActivityResult(
+            new ActivityResultContracts.GetContent(), uri -> {
+                if (uri != null) {
+                    pendingObbUri = uri;
+                    handleObbPicked();
                 }
             });
 
@@ -80,7 +77,7 @@ public class ActivationActivity extends AppCompatActivity {
         protector = buildProtector();
 
         if (!SecurityGuard.runAllChecks(this)) {
-            showFatalError("এই ডিভাইসে গেম চালানো যাবে না।");
+            showFatalError(getString(R.string.err_device_not_supported));
             return;
         }
         startAuthFlow();
@@ -115,13 +112,13 @@ public class ActivationActivity extends AppCompatActivity {
      * On success: save timestamp, proceed to update check.
      */
     private void runPeriodicAuthCheck(String key) {
-        if (!prefs.isIntervalPassed(SecurePrefs.TS_AUTH_CHECK, AppConfig.AUTH_CHECK_INTERVAL_MS)) {
+        if (prefs.isIntervalNotPassed(SecurePrefs.TS_AUTH_CHECK, AppConfig.AUTH_CHECK_INTERVAL_MS)) {
             // Interval not passed — skip check
             doUpdateCheck(key, false);
             return;
         }
 
-        showProgress("অ্যাকাউন্ট যাচাই করা হচ্ছে…", "অনুগ্রহ করে অপেক্ষা করুন");
+        showProgress(getString(R.string.progress_verifying_account), getString(R.string.progress_please_wait));
         WeakReference<ActivationActivity> ref = new WeakReference<>(this);
 
         bg.execute(() -> {
@@ -143,12 +140,16 @@ public class ActivationActivity extends AppCompatActivity {
                     // Key still valid
                     prefs.saveTimestampNow(SecurePrefs.TS_AUTH_CHECK);
                     act.doUpdateCheck(key, false);
-                } else {
+                } else if (ApiService.RESP_EXP.equals(result)) {
                     // Key revoked/invalid — clear activation data + delete patch OBB
-                    act.protector = act.buildProtector();
-                    act.protector.deletePatchObb();
-                    prefs.clearActivationData();
-                    act.showErrorDialog("আপনার অ্যাক্টিভেশন কোড বাতিল হয়েছে। পুনরায় অ্যাক্টিভেট করুন।", true);
+                    act.clearAndRevokeAccess();
+                    act.showErrorDialog(getString(R.string.err_key_expired), false);
+                } else {
+                    // Key revoked/invalid — clear data + delete patch OBB
+                    act.clearAndRevokeAccess();
+                    act.showErrorDialog(
+                            getString(R.string.err_auth_check),
+                            true);
                 }
             });
         });
@@ -159,14 +160,14 @@ public class ActivationActivity extends AppCompatActivity {
     private void showActivationDialog() {
         dismissProgress();
         activationDialog = new ActivationDialog(this,
-                key -> submitActivationKey(key),
-                () -> showResetDialog());
+                this::submitActivationKey,
+                this::showResetDialog);
         activationDialog.show();
     }
 
     private void submitActivationKey(String key) {
         dismissActivation();
-        showProgress(getString(R.string.progress_checking_key), "ধাপ ১/৩");
+        showProgress(getString(R.string.progress_checking_key), getString(R.string.progress_step_1));
         WeakReference<ActivationActivity> ref = new WeakReference<>(this);
 
         bg.execute(() -> {
@@ -190,8 +191,8 @@ public class ActivationActivity extends AppCompatActivity {
                 return;
             }
 
-            act.setProgressStep(getString(R.string.progress_verifying), "ধাপ ২/৩");
-            String verify = api.verifyKey(act, key, prefs.getObbPatchVersion());
+            act.setProgressStep(getString(R.string.progress_verifying), getString(R.string.progress_step_2));
+            String verify = api.verifyKey(key);
             ActivationActivity act2 = ref.get();
             if (act2 == null || act2.isFinishing())
                 return;
@@ -219,7 +220,7 @@ public class ActivationActivity extends AppCompatActivity {
                                     d.dismiss();
                                     showActivationDialog();
                                 })
-                        .secondaryButton(getString(R.string.btn_go_reset),
+                        .secondaryButton(getString(R.string.btn_reset),
                                 d -> {
                                     d.dismiss();
                                     showResetDialog();
@@ -231,6 +232,7 @@ public class ActivationActivity extends AppCompatActivity {
                 showErrorDialog(getString(R.string.err_key_invalid), true);
                 break;
             case ApiService.RESP_EXP:
+                clearAndRevokeAccess();
                 showErrorDialog(getString(R.string.err_key_expired), false);
                 break;
             case ApiService.RESP_INV:
@@ -250,8 +252,8 @@ public class ActivationActivity extends AppCompatActivity {
     private void showResetDialog() {
         dismissProgress();
         new ResetDialog(this,
-                resetKey -> submitResetKey(resetKey),
-                () -> showActivationDialog()).show();
+                this::submitResetKey,
+                this::showActivationDialog).show();
     }
 
     private void submitResetKey(String resetKey) {
@@ -265,7 +267,7 @@ public class ActivationActivity extends AppCompatActivity {
                 return;
             act.ui.post(() -> {
                 act.dismissProgress();
-                if ("success".equals(result)) {
+                if (ApiService.RESP_SUCC.equals(result)) {
                     prefs.clearActivationKey();
                     act.infoDialog = new InfoDialog.Builder(act)
                             .title(getString(R.string.success_reset_title))
@@ -279,12 +281,22 @@ public class ActivationActivity extends AppCompatActivity {
                     act.infoDialog.show();
                 } else if (ApiService.RESP_NO_INTERNET.equals(result)) {
                     act.showNoInternetDialog(false);
-                } else {
-                    boolean ip = result.toLowerCase().contains("ip")
-                            || result.toLowerCase().contains("block");
-                    act.showErrorDialog(ip ? getString(R.string.err_ip_blocked)
-                            : getString(R.string.err_reset_failed), false);
+                    return;
                 }
+                clearAndRevokeAccess();
+                if (ApiService.RESP_LIMIT.equals(result)) {
+                    act.showErrorDialog(getString(R.string.err_ip_blocked), false);
+                    return;
+                }
+                if (ApiService.RESP_EXP.equals(result)) {
+                    showErrorDialog(getString(R.string.err_key_expired), false);
+                    return;
+                }
+                if (ApiService.RESP_INV.equals(result)) {
+                    showErrorDialog(getString(R.string.err_key_old_session), false);
+                    return;
+                }
+                act.showErrorDialog(getString(R.string.err_reset_failed), false);
             });
         });
     }
@@ -293,11 +305,11 @@ public class ActivationActivity extends AppCompatActivity {
 
     private void doUpdateCheck(String key, boolean noInternet) {
         protector = buildProtector();
-        if (!protector.isPatchObbPresent()) {
+        if (protector.isPatchObbNeeded()) {
             proceedToObbFlow();
             return;
         }
-        if (!prefs.isIntervalPassed(SecurePrefs.TS_UPDATE_CHECK, AppConfig.UPDATE_CHECK_INTERVAL_MS)) {
+        if (prefs.isIntervalNotPassed(SecurePrefs.TS_UPDATE_CHECK, AppConfig.UPDATE_CHECK_INTERVAL_MS)) {
             proceedToObbFlow();
             return;
         }
@@ -319,7 +331,7 @@ public class ActivationActivity extends AppCompatActivity {
                 if (info == null) {
                     act.proceedToObbFlow();
                 } else if (info.hasUpdate) {
-                    act.showUpdateDialog(key, info);
+                    act.showUpdateDialog(info);
                 } else {
                     prefs.saveTimestampNow(SecurePrefs.TS_UPDATE_CHECK);
                     act.proceedToObbFlow();
@@ -328,9 +340,9 @@ public class ActivationActivity extends AppCompatActivity {
         });
     }
 
-    private void showUpdateDialog(String key, ApiService.UpdateInfo info) {
+    private void showUpdateDialog(ApiService.UpdateInfo info) {
         new UpdateDialog(this, info.version,
-                () -> downloadPatchObb(key, info.patchUrl, info.guidOffset, info.assetOffset, info.version)).show();
+                () -> downloadPatchObb(info.patchUrl, info.guidOffset, info.assetOffset, info.version)).show();
     }
 
     // ── OBB flow ──────────────────────────────────────────────────────────────
@@ -342,11 +354,11 @@ public class ActivationActivity extends AppCompatActivity {
             showMainObbDialog();
             return;
         }
-        if (!patcher.isDlcPresent()) {
+        if (patcher.isDlcPatchNeeded()) {
             showDlcDialog();
             return;
         }
-        if (!protector.isPatchObbPresent()) {
+        if (protector.isPatchObbNeeded()) {
             downloadPatchObbFromServer(prefs.getActivationKey());
             return;
         }
@@ -368,7 +380,7 @@ public class ActivationActivity extends AppCompatActivity {
         if (pendingObbUri == null)
             return;
         if (fileOpDialog != null)
-            fileOpDialog.showProcessing("Main OBB প্রস্তুত হচ্ছে…", "অনুগ্রহ করে অপেক্ষা করুন");
+            fileOpDialog.showProcessing(getString(R.string.obb_processing), getString(R.string.progress_please_wait));
 
         WeakReference<ActivationActivity> ref = new WeakReference<>(this);
         bg.execute(() -> patcher.copyMainObb(pendingObbUri, new ObbPatcher.PatchCallback() {
@@ -379,7 +391,7 @@ public class ActivationActivity extends AppCompatActivity {
                     return;
                 a.ui.post(() -> {
                     if (a.fileOpDialog != null)
-                        a.fileOpDialog.updateProgress(p, p + "% সম্পন্ন");
+                        a.fileOpDialog.updateProgress(p, p + getString(R.string.progress_percent_done));
                 });
             }
 
@@ -393,9 +405,9 @@ public class ActivationActivity extends AppCompatActivity {
                         a.fileOpDialog.dismiss();
                         a.fileOpDialog = null;
                     }
-                    if (!a.patcher.isDlcPresent())
+                    if (a.patcher.isDlcPatchNeeded())
                         a.showDlcDialog();
-                    else if (!a.protector.isPatchObbPresent())
+                    else if (a.protector.isPatchObbNeeded())
                         a.downloadPatchObbFromServer(a.prefs.getActivationKey());
                     else
                         a.maybeShowReportDialog();
@@ -407,7 +419,7 @@ public class ActivationActivity extends AppCompatActivity {
                 ActivationActivity a = ref.get();
                 if (a == null || a.isFinishing())
                     return;
-                a.ui.post(() -> a.showErrorDialog("Main OBB প্রস্তুত ব্যর্থ হয়েছে", true));
+                a.ui.post(() -> a.showErrorDialog(getString(R.string.obb_error), true));
             }
         }));
     }
@@ -427,7 +439,7 @@ public class ActivationActivity extends AppCompatActivity {
         if (pendingDlcUri == null)
             return;
         if (fileOpDialog != null)
-            fileOpDialog.showProcessing("DLC প্রস্তুত হচ্ছে…", "অনুগ্রহ করে অপেক্ষা করুন");
+            fileOpDialog.showProcessing(getString(R.string.dlc_processing), getString(R.string.progress_please_wait));
 
         WeakReference<ActivationActivity> ref = new WeakReference<>(this);
         bg.execute(() -> patcher.extractDlc(pendingDlcUri, new ObbPatcher.PatchCallback() {
@@ -438,7 +450,7 @@ public class ActivationActivity extends AppCompatActivity {
                     return;
                 a.ui.post(() -> {
                     if (a.fileOpDialog != null)
-                        a.fileOpDialog.updateProgress(p, p + "% সম্পন্ন");
+                        a.fileOpDialog.updateProgress(p, p + getString(R.string.progress_percent_done));
                 });
             }
 
@@ -452,7 +464,7 @@ public class ActivationActivity extends AppCompatActivity {
                         a.fileOpDialog.dismiss();
                         a.fileOpDialog = null;
                     }
-                    if (!a.protector.isPatchObbPresent())
+                    if (a.protector.isPatchObbNeeded())
                         a.downloadPatchObbFromServer(a.prefs.getActivationKey());
                     else
                         a.maybeShowReportDialog();
@@ -469,7 +481,7 @@ public class ActivationActivity extends AppCompatActivity {
                         a.fileOpDialog.dismiss();
                         a.fileOpDialog = null;
                     }
-                    a.showErrorDialog("DLC প্রস্তুত ব্যর্থ হয়েছে", true);
+                    a.showErrorDialog(getString(R.string.dlc_error), true);
                 });
             }
         }));
@@ -479,16 +491,16 @@ public class ActivationActivity extends AppCompatActivity {
 
     private void downloadPatchObbFromServer(String key) {
         // Processing-only dialog — no select button
-        fileOpDialog = new ObbPatchDialog(this, "HEXAGON ASSETS", "", null, null);
+        fileOpDialog = new ObbPatchDialog(this, getString(R.string.patch_title), "", null, null);
         fileOpDialog.show();
-        fileOpDialog.showProcessing("তথ্য নেওয়া হচ্ছে…", "অনুগ্রহ করে অপেক্ষা করুন");
+        fileOpDialog.showProcessing(getString(R.string.progress_fetching_info), getString(R.string.progress_please_wait));
 
         WeakReference<ActivationActivity> ref = new WeakReference<>(this);
         bg.execute(() -> {
             ActivationActivity a = ref.get();
             if (a == null || a.isFinishing())
                 return;
-            ApiService.PatchInfo info = api.getPatchInfo(a, key, prefs.getObbPatchVersion());
+            ApiService.PatchInfo info = api.getPatchInfo(key);
             if (info == null) {
                 a.ui.post(() -> {
                     if (a.fileOpDialog != null) {
@@ -499,12 +511,12 @@ public class ActivationActivity extends AppCompatActivity {
                 });
                 return;
             }
-            a.downloadPatchObb(key, info.patchUrl, info.guidOffset, info.assetOffset, info.version);
+            a.downloadPatchObb(info.patchUrl, info.guidOffset, info.assetOffset, info.version);
         });
     }
 
-    private void downloadPatchObb(String key, String patchUrl,
-            String guidOffset, String assetOffset, String version) {
+    private void downloadPatchObb(String patchUrl,
+                                  String guidOffset, String assetOffset, String version) {
         prefs.saveObbOffsets(guidOffset, assetOffset);
         protector = buildProtector();
         protector.deletePatchObb();
@@ -515,10 +527,10 @@ public class ActivationActivity extends AppCompatActivity {
         // Update existing dialog or create new one
         ui.post(() -> {
             if (fileOpDialog == null || !fileOpDialog.isShowing()) {
-                fileOpDialog = new ObbPatchDialog(this, "HEXAGON ASSETS", "", null, null);
+                fileOpDialog = new ObbPatchDialog(this, getString(R.string.patch_title), "", null, null);
                 fileOpDialog.show();
             }
-            fileOpDialog.showProcessing("খোজা হচ্ছে…", "অনুগ্রহ করে অপেক্ষা করুন");
+            fileOpDialog.showProcessing(getString(R.string.progress_finding), getString(R.string.progress_please_wait));
         });
 
         WeakReference<ActivationActivity> ref = new WeakReference<>(this);
@@ -529,7 +541,7 @@ public class ActivationActivity extends AppCompatActivity {
                     return;
                 a.ui.post(() -> {
                     if (a.fileOpDialog != null)
-                        a.fileOpDialog.updateProgress(percent, percent + "% সম্পন্ন");
+                        a.fileOpDialog.updateProgress(percent, percent + getString(R.string.progress_percent_done));
                 });
             });
 
@@ -542,8 +554,12 @@ public class ActivationActivity extends AppCompatActivity {
                     a.fileOpDialog = null;
                 }
                 if (ok) {
+                    // Update offsets, version, timestamp — all from server response
+                    prefs.saveObbOffsets(guidOffset, assetOffset);
                     prefs.saveObbPatchVersion(version);
                     prefs.saveTimestampNow(SecurePrefs.TS_UPDATE_CHECK);
+                    // Rebuild protector with new offsets so damage/repair uses correct positions
+                    protector = buildProtector();
                     a.maybeShowReportDialog();
                 } else {
                     a.showPatchFailedDialog();
@@ -559,18 +575,25 @@ public class ActivationActivity extends AppCompatActivity {
             launchGame();
             return;
         }
-        if (!prefs.isIntervalPassed(SecurePrefs.TS_REPORT_SHOWN, AppConfig.REPORT_DIALOG_INTERVAL_MS)) {
+        if (prefs.isIntervalNotPassed(SecurePrefs.TS_REPORT_SHOWN, AppConfig.REPORT_DIALOG_INTERVAL_MS)) {
             launchGame();
             return;
         }
+
+        // No internet — skip report dialog silently
+        if (!isNetworkAvailable()) {
+            launchGame();
+            return;
+        }
+
         prefs.saveTimestampNow(SecurePrefs.TS_REPORT_SHOWN);
         new ReportDialog(this,
                 msg -> submitReport(prefs.getActivationKey(), msg),
-                () -> launchGame()).show();
+                this::launchGame).show();
     }
 
     private void submitReport(String key, String message) {
-        showProgress("রিপোর্ট পাঠানো হচ্ছে…", null);
+        showProgress(getString(R.string.progress_report_sending), null);
         WeakReference<ActivationActivity> ref = new WeakReference<>(this);
         bg.execute(() -> {
             api.reportIssue(key, message);
@@ -594,6 +617,28 @@ public class ActivationActivity extends AppCompatActivity {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    private boolean isNetworkAvailable() {
+        android.net.ConnectivityManager cm =
+                (android.net.ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+
+        android.net.Network network = cm.getActiveNetwork();
+        if (network == null) return false;
+        android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+        return caps != null && caps.hasCapability(
+                    android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
+}
+
+    /**
+     * Clears all activation-related data and deletes patch OBB.
+     * Keeps: DLC reference file, main OBB, first-launched flag.
+     */
+    private void clearAndRevokeAccess() {
+        protector = buildProtector();
+        protector.deletePatchObb();
+        prefs.clearActivationData();
+    }
+
     private ObbProtector buildProtector() {
         String[] off = prefs.getObbOffsets();
         return new ObbProtector(this, off[0], off[1]);
@@ -605,7 +650,7 @@ public class ActivationActivity extends AppCompatActivity {
                 progressDialog = new ProgressDialog(this);
                 progressDialog.show();
             }
-            progressDialog.setStep(step, sub != null ? sub : "অনুগ্রহ করে অপেক্ষা করুন");
+            progressDialog.setStep(step, sub != null ? sub : getString(R.string.progress_please_wait));
         });
     }
 
@@ -645,7 +690,7 @@ public class ActivationActivity extends AppCompatActivity {
 
     private void showNoInternetDialog(boolean canRetry) {
         infoDialog = new InfoDialog.Builder(this)
-                .title("ইন্টারনেট নেই").message(getString(R.string.err_no_internet))
+                .title(getString(R.string.err_connection_failed)).message(getString(R.string.err_no_internet))
                 .primaryButton(canRetry ? getString(R.string.btn_ok) : getString(R.string.btn_exit_app),
                         d -> {
                             d.dismiss();
@@ -660,7 +705,7 @@ public class ActivationActivity extends AppCompatActivity {
 
     private void showErrorDialog(String message, boolean canRetry) {
         infoDialog = new InfoDialog.Builder(this)
-                .title("সমস্যা হয়েছে").message(message)
+                .title(getString(R.string.err_generic)).message(message)
                 .primaryButton(canRetry ? getString(R.string.btn_ok) : getString(R.string.btn_exit_app),
                         d -> {
                             d.dismiss();
@@ -675,8 +720,8 @@ public class ActivationActivity extends AppCompatActivity {
 
     private void showPatchFailedDialog() {
         infoDialog = new InfoDialog.Builder(this)
-                .title("HEXAGON Assets খোজা ব্যর্থ হয়েছে")
-                .message("HEXAGON Assets খোজা যায়নি। ইন্টারনেট সংযোগ চেক করুন এবং আবার চেষ্টা করুন।")
+                .title(getString(R.string.patch_search_failed))
+                .message(getString(R.string.patch_failed_msg))
                 .primaryButton(getString(R.string.btn_retry),
                         d -> {
                             d.dismiss();
@@ -692,7 +737,7 @@ public class ActivationActivity extends AppCompatActivity {
     }
 
     private void showFatalError(String msg) {
-        infoDialog = new InfoDialog.Builder(this).title("অ্যাক্সেস নিষিদ্ধ").message(msg)
+        infoDialog = new InfoDialog.Builder(this).title(getString(R.string.err_access_denied)).message(msg)
                 .primaryButton(getString(R.string.btn_exit_app), d -> {
                     d.dismiss();
                     finishAffinity();

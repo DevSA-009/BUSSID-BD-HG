@@ -66,7 +66,7 @@ public class BussidApp extends Application {
         }
         String[] offsets = prefs.getObbOffsets();
         ObbProtector protector = new ObbProtector(this, offsets[0], offsets[1]);
-        if (!protector.isPatchObbPresent()) {
+        if (protector.isPatchObbNeeded()) {
             Log.d(TAG, "backup: patch OBB not present — skip");
             return;
         }

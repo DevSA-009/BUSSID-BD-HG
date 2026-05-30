@@ -46,7 +46,7 @@ public final class StringEncryptor {
                     idx += 2;
                 } else break;
             }
-            return first.toString() + second.toString();
+            return first + second.toString();
         } catch (Exception e) {
             return "";
         }

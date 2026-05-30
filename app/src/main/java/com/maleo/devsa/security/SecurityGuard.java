@@ -36,8 +36,7 @@ public final class SecurityGuard {
         if (AppConfig.ENABLE_ANTI_DEBUG && isDebuggerAttached()) return false;
         if (AppConfig.ENABLE_ROOT_DETECTION && isRooted()) return false;
         if (AppConfig.ENABLE_EMULATOR_DETECTION && isEmulator()) return false;
-        if (AppConfig.ENABLE_SIGNATURE_CHECK && !isSignatureValid(context)) return false;
-        return true;
+        return !AppConfig.ENABLE_SIGNATURE_CHECK || isSignatureValid(context);
     }
 
     // ─── Anti-Debug ──────────────────────────────────────────────────────────
@@ -110,7 +109,6 @@ public final class SecurityGuard {
                         .getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES)
                         .signingInfo.getApkContentsSigners();
             } else {
-                //noinspection deprecation
                 sigs = context.getPackageManager()
                         .getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNATURES)
                         .signatures;

@@ -64,13 +64,18 @@ public class InfoDialog extends BaseDialog {
         final Context context;
         String title = "";
         String message = "";
-        String primaryBtnText = "ঠিক আছে";
+        String primaryBtnText;
         String secondaryBtnText;
         OnInfoAction primaryAction;
         OnInfoAction secondaryAction;
 
-        public Builder(Context c) {
-            this.context = c;
+        /**
+         * Default primary button label is R.string.btn_ok — "ঠিক আছে"
+         * Resolved via context so no hardcoded Bangle string in Java code.
+         */
+        public Builder(Context context) {
+            this.context = context;
+            this.primaryBtnText = context.getString(R.string.btn_ok);
         }
 
         public Builder title(String t) {

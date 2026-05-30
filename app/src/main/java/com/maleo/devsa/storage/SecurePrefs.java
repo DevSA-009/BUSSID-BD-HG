@@ -89,7 +89,7 @@ public class SecurePrefs {
     }
 
     public String[] getObbOffsets() {
-        return new String[] {
+        return new String[]{
                 getDecrypted(KEY_GUID_OFFSET, ""),
                 getDecrypted(KEY_ASSET_OFFSET, "")
         };
@@ -110,16 +110,15 @@ public class SecurePrefs {
      * Returns true if intervalMs has elapsed since the stored timestamp,
      * or if no timestamp stored yet (treat as "always passed" → check now).
      */
-    public boolean isIntervalPassed(String key, long intervalMs) {
+    public boolean isIntervalNotPassed(String key, long intervalMs) {
         String raw = getDecrypted(key, "0");
         long last = 0;
         try {
             last = Long.parseLong(raw);
         } catch (NumberFormatException ignored) {
         }
-        if (last == 0L)
-            return true;
-        return (System.currentTimeMillis() - last) >= intervalMs;
+        if (last == 0L) return false;
+        return (System.currentTimeMillis() - last) < intervalMs;
     }
 
     /**
@@ -150,11 +149,12 @@ public class SecurePrefs {
         Log.d(TAG, "clearActivationData: activation data cleared");
     }
 
+    /*
     // ── Full clear ────────────────────────────────────────────────────────────
     public void clearAll() {
         prefs.edit().clear().apply();
     }
-
+ */
     // ── AES-256-GCM ───────────────────────────────────────────────────────────
 
     private void putEncrypted(String key, String value) {
@@ -173,18 +173,16 @@ public class SecurePrefs {
             System.arraycopy(iv, 0, combined, 0, iv.length);
             System.arraycopy(ciphertext, 0, combined, iv.length, ciphertext.length);
 
-            // prefs.edit()
-            // .putString(key, Base64.encodeToString(combined, Base64.NO_WRAP))
-            // .apply();
             prefs.edit()
-                    .putString(key, value)
+                    .putString(key, Base64.encodeToString(combined, Base64.NO_WRAP))
                     .apply();
+//            prefs.edit()
+//                    .putString(key, value)
+//                    .apply();
         } catch (Exception e) {
             Log.e(TAG, "encrypt failed [" + key + "]: " + e.getMessage());
         }
     }
-
-    /*
 
     private String getDecrypted(String key, String defaultValue) {
         String stored = prefs.getString(key, null);
@@ -211,13 +209,13 @@ public class SecurePrefs {
         }
     }
 
-    */
-
+    /*
     private String getDecrypted(String key, String defaultValue) {
-    // Directly retrieve and return the stored value, 
-    // falling back to defaultValue if it doesn't exist.
-    return prefs.getString(key, defaultValue);
-}
+        // Directly retrieve and return the stored value,
+        // falling back to defaultValue if it doesn't exist.
+        return prefs.getString(key, defaultValue);
+    }
+    */
 
     private SecretKey getSecretKey() throws Exception {
         KeyStore ks = KeyStore.getInstance(KEYSTORE);

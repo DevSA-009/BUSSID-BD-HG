@@ -12,39 +12,37 @@ import com.maleo.bussidbdhg.R;
 
 /**
  * ObbPatchDialog — Unified dialog for ALL file operations:
- *   Main OBB copy, DLC extract, Patch OBB download, Update download.
- *
+ * Main OBB copy, DLC extract, Patch OBB download, Update download.
+ * <p>
  * TWO MODES:
- *
- *  MODE_SELECT (default):
- *    Shows: title + divider + message + select button
- *    User taps button → triggers file picker
- *    After picker → call showProcessing() to switch mode
- *
- *  MODE_PROCESSING (after file picked OR for server downloads):
- *    Shows: spinner + main label (bold blue) + sub label (small white) + progress bar
- *    Select button is GONE completely
- *    Use showProcessing(step, sub) to enter this mode
- *    Use updateProgress(percent) to update bar + sub label
+ * <p>
+ * MODE_SELECT (default):
+ * Shows: title + divider + message + select button
+ * User taps button → triggers file picker
+ * After picker → call showProcessing() to switch mode
+ * <p>
+ * MODE_PROCESSING (after file picked OR for server downloads):
+ * Shows: spinner + main label (bold blue) + sub label (small white) + progress bar
+ * Select button is GONE completely
+ * Use showProcessing(step, sub) to enter this mode
+ * Use updateProgress(percent) to update bar + sub label
  */
 public class ObbPatchDialog extends BaseDialog {
 
-    public interface OnSelectListener { void onSelect(); }
+    public interface OnSelectListener {
+        void onSelect();
+    }
 
-    // ── View references ───────────────────────────────────────────────────────
-    private Button        btnSelect;
-    private LinearLayout  layoutIdle;       // title + message + button
-    private LinearLayout  layoutProcessing; // spinner + two labels + progress bar
-    private TextView      tvTitle;
-    private TextView      tvMessage;
-    private TextView      tvPatchStep;
-    private TextView      tvPatchSubStep;
-    private ProgressBar   progressBar;
+    private LinearLayout layoutIdle;       // title + message + button
+    private LinearLayout layoutProcessing; // spinner + two labels + progress bar
+    private TextView tvPatchStep;
+    private TextView tvPatchSubStep;
+    private ProgressBar progressBar;
 
     // ── Config ────────────────────────────────────────────────────────────────
-    private final String           title;
-    private final String           message;
-    private final String           btnText;
+    private final String title;
+    private final String message;
+    private final String btnText;
     private final OnSelectListener listener;
 
     /**
@@ -56,9 +54,9 @@ public class ObbPatchDialog extends BaseDialog {
     public ObbPatchDialog(Context context, String title, String message,
                           String btnText, OnSelectListener listener) {
         super(context);
-        this.title    = title;
-        this.message  = message;
-        this.btnText  = btnText;
+        this.title = title;
+        this.message = message;
+        this.btnText = btnText;
         this.listener = listener;
     }
 
@@ -68,21 +66,24 @@ public class ObbPatchDialog extends BaseDialog {
         setContentView(R.layout.dialog_obb_patch);
         applyDimensions();
 
-        tvTitle          = findViewById(R.id.tvObbTitle);
-        tvMessage        = findViewById(R.id.tvObbMessage);
-        btnSelect        = findViewById(R.id.btnObbSelect);
-        layoutIdle       = findViewById(R.id.layoutIdle);
+        TextView tvTitle = findViewById(R.id.tvObbTitle);
+        TextView tvMessage = findViewById(R.id.tvObbMessage);
+        // ── View references ───────────────────────────────────────────────────────
+        Button btnSelect = findViewById(R.id.btnObbSelect);
+        layoutIdle = findViewById(R.id.layoutIdle);
         layoutProcessing = findViewById(R.id.layoutProcessing);
-        tvPatchStep      = findViewById(R.id.tvPatchStep);
-        tvPatchSubStep   = findViewById(R.id.tvPatchSubStep);
-        progressBar      = findViewById(R.id.progressPatch);
+        tvPatchStep = findViewById(R.id.tvPatchStep);
+        tvPatchSubStep = findViewById(R.id.tvPatchSubStep);
+        progressBar = findViewById(R.id.progressPatch);
 
         tvTitle.setText(title);
         tvMessage.setText(message);
 
         if (btnText != null && !btnText.isEmpty()) {
             btnSelect.setText(btnText);
-            btnSelect.setOnClickListener(v -> { if (listener != null) listener.onSelect(); });
+            btnSelect.setOnClickListener(v -> {
+                if (listener != null) listener.onSelect();
+            });
         } else {
             // No select button needed — switch to processing immediately
             layoutIdle.setVisibility(View.GONE);
@@ -93,8 +94,9 @@ public class ObbPatchDialog extends BaseDialog {
     /**
      * Switch to processing mode.
      * Hides title/message/button. Shows spinner + two labels.
-     * @param stepText  Main label — e.g. "ডাউনলোড হচ্ছে…"
-     * @param subText   Sub label  — e.g. "অনুগ্রহ করে অপেক্ষা করুন"
+     *
+     * @param stepText Main label — e.g. "ডাউনলোড হচ্ছে…"
+     * @param subText  Sub label  — e.g. "অনুগ্রহ করে অপেক্ষা করুন"
      */
     public void showProcessing(String stepText, String subText) {
         if (layoutIdle == null) return;
@@ -108,8 +110,9 @@ public class ObbPatchDialog extends BaseDialog {
 
     /**
      * Update labels and progress bar during file operation.
-     * @param percent  0-100, pass -1 to hide bar
-     * @param subText  Updated sub label (e.g. "৪৫% সম্পন্ন")
+     *
+     * @param percent 0-100, pass -1 to hide bar
+     * @param subText Updated sub label (e.g. "৪৫% সম্পন্ন")
      */
     public void updateProgress(int percent, String subText) {
         if (tvPatchSubStep == null) return;

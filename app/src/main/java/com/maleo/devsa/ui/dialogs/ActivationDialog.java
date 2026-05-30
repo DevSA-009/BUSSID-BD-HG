@@ -47,7 +47,7 @@ public class ActivationDialog extends BaseDialog {
         btnActivate.setOnClickListener(v -> {
             String key = etKey.getText().toString().trim();
             if (TextUtils.isEmpty(key)) {
-                etKey.setError(getContext().getString(R.string.err_key_empty));
+                etKey.setError(getContext().getString(R.string.activation_hint));
                 return;
             }
             if (activateListener != null) activateListener.onActivate(key);

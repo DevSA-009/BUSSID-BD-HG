@@ -107,11 +107,7 @@ public class UnityPlayerActivity extends Activity {
 
         bg.execute(() -> {
             ApiService api = new ApiService();
-            String result = api.verifyKey(
-                    weakThis.get() != null ? weakThis.get() : getApplicationContext(),
-                    key,
-                    prefs.getObbPatchVersion()
-            );
+            String result = api.verifyKey(key);
 
             UnityPlayerActivity act = weakThis.get();
             if (act == null || act.isFinishing()) return; // Activity gone — don't crash

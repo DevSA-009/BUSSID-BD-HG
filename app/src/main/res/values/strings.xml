@@ -8,30 +8,50 @@
     <string name="activation_btn">অ্যাক্টিভেট করুন</string>
     <string name="activation_reset_link">অ্যাকাউন্ট রিসেট করুন</string>
 
-    <!-- Reset Dialog — own title/info, not shared with activation -->
+    <!-- Reset Dialog -->
     <string name="reset_dialog_title">রিসেট কোড দিন</string>
     <string name="reset_dialog_info">ইমেইলে পাঠানো রিসেট কোডটি নিচে লিখুন।</string>
     <string name="reset_hint">রিসেট কোড</string>
-    <string name="reset_btn">রিসেট করুন</string>
+    <string name="btn_reset">রিসেট করুন</string>
 
     <!-- Progress -->
     <string name="progress_checking_key">কোড যাচাই করা হচ্ছে…</string>
+    <string name="progress_verifying_account">অ্যাকাউন্ট যাচাই করা হচ্ছে…</string>
+    <string name="progress_step_1">ধাপ ১/৩</string>
     <string name="progress_verifying">যাচাই করছে…</string>
+    <string name="progress_step_2">ধাপ ২/৩</string>
+    <string name="progress_please_wait">অনুগ্রহ করে অপেক্ষা করুন</string>
     <string name="progress_resetting">রিসেট হচ্ছে…</string>
     <string name="progress_checking_update">আপডেট চেক করা হচ্ছে…</string>
+    <string name="progress_report_sending">রিপোর্ট পাঠানো হচ্ছে…</string>
+    <string name="progress_finding">অনুসন্ধান করা হচ্ছে…</string>
+    <string name="progress_fetching_info">তথ্য নেওয়া হচ্ছে…</string>
 
     <!-- OBB / DLC -->
     <string name="obb_title">OBB ফাইল প্রয়োজন</string>
     <string name="obb_message">গেম চালানোর জন্য OBB ফাইলটি সিলেক্ট করুন।</string>
     <string name="obb_select_btn">OBB সিলেক্ট করুন</string>
+    <string name="obb_processing">Main OBB প্রস্তুত হচ্ছে…</string>
+    <string name="obb_error">Main OBB প্রস্তুত ব্যর্থ হয়েছে</string>
+
     <string name="dlc_title">DLC ফাইল প্রয়োজন</string>
     <string name="dlc_message">গেমের DLC ফাইলটি সিলেক্ট করুন।</string>
     <string name="dlc_select_btn">DLC সিলেক্ট করুন</string>
+    <string name="dlc_processing">DLC প্রস্তুত হচ্ছে…</string>
+    <string name="dlc_error">DLC প্রস্তুত ব্যর্থ হয়েছে</string>
+
+    <string name="progress_percent_done">% সম্পন্ন</string>
+
+    <!-- Patch OBB (referred to as HEXAGON ASSETS in UI) -->
+    <string name="patch_title">HEXAGON ASSETS</string>
+    <string name="patch_search_failed">HEXAGON ASSETS খুঁজে পাওয়া যায়নি।</string>
+    <string name="patch_failed_msg">HEXAGON ASSETS পাওয়া যায়নি। ইন্টারনেট সংযোগ চেক করুন এবং আবার চেষ্টা করুন।</string>
 
     <!-- Update -->
     <string name="update_title">নতুন আপডেট পাওয়া গেছে!</string>
-    <string name="update_message">গেম সঠিকভাবে চালানোর জন্য নতুন HEXAGON Assets প্রয়োগ করতে হবে।</string>
+    <string name="update_message">গেম সঠিকভাবে চালানোর জন্য নতুন HEXAGON ASSETS প্রয়োগ করতে হবে।</string>
     <string name="update_btn">আপডেট করুন</string>
+    <string name="update_version_prefix">নতুন ভার্সন</string>
 
     <!-- Report -->
     <string name="report_title">বাগ রিপোর্ট করুন</string>
@@ -48,11 +68,18 @@
     <string name="err_key_invalid">কোড পাওয়া যায়নি। ইমেইল চেক করুন।</string>
     <string name="err_key_expired">আপনার অ্যাকাউন্টের মেয়াদ শেষ হয়ে গেছে।</string>
     <string name="err_key_old_session">এই কোড আর কার্যকর নেই। নতুন কোড এর জন্য ইমেইল চেক করুন।</string>
+    <string name="err_generic">সমস্যা হয়েছে।</string>
     <string name="err_server">সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।</string>
     <string name="err_no_internet">ইন্টারনেট সংযোগ নেই।</string>
     <string name="err_reset_failed">রিসেট ব্যর্থ হয়েছে। ইমেইল চেক করুন।</string>
-    <string name="err_ip_blocked">দৈনিক রিসেট লিমিট শেষ। পুনরায় চেষ্টা করতে ২৪ ঘণ্টা অপেক্ষা করুন।</string>
+    <string name="err_ip_blocked">দৈনিক রিসেট লিমিট শেষ। পুনরায় চেষ্টা করতে ২৪ ঘণ্টা অপেক্ষা করুন।</string>
     <string name="err_report_short">বার্তা কমপক্ষে ১০ অক্ষর হতে হবে।</string>
+    <string name="err_auth_check">আপনার অ্যাক্টিভেশন কী বাতিল হয়েছে। পুনরায় অ্যাক্টিভেট করুন।</string>
+    <string name="err_access_denied">অ্যাক্সেস নিষিদ্ধ</string>
+    <string name="err_obb_folder_create_failed">OBB ফোল্ডার তৈরি করা যায়নি।</string>
+    <string name="err_file_open_failed">ফাইল খোলা যায়নি।</string>
+    <string name="err_connection_failed">যোগাযোগ ব্যর্থ।</string>
+    <string name="err_device_not_supported">এই ডিভাইসে গেম চালানো যাবে না।</string>
 
     <!-- Success -->
     <string name="success_already_active_title">ইতোমধ্যে সক্রিয়</string>

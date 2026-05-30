@@ -1,5 +1,6 @@
 package com.maleo.devsa.ui.dialogs;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.widget.Button;
@@ -25,14 +26,16 @@ public class UpdateDialog extends BaseDialog {
         this.listener = listener;
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dialog_update);
         applyDimensions();
 
-        ((TextView) findViewById(R.id.tvUpdateVersion)).setText("নতুন ভার্সন: " + version);
-        ((Button) findViewById(R.id.btnUpdate)).setOnClickListener(v -> {
+        ((TextView) findViewById(R.id.tvUpdateVersion)).setText(
+                getContext().getString(R.string.update_version_prefix) + ": " + version);
+        findViewById(R.id.btnUpdate).setOnClickListener(v -> {
             if (listener != null) listener.onUpdate();
         });
     }

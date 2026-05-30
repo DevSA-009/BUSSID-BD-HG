@@ -40,17 +40,4 @@ public class ProgressDialog extends BaseDialog {
         tvSubStep.setText(subStep != null ? subStep : "");
     }
 
-    public void setDownloadProgress(int percent) {
-        if (barDownload == null) return;
-        tvPercent.setVisibility(View.VISIBLE);
-        barDownload.setVisibility(View.VISIBLE);
-        tvPercent.setText(percent + "%");
-        barDownload.setProgress(percent);
-    }
-
-    public void hideDownloadBar() {
-        if (tvPercent == null) return;
-        tvPercent.setVisibility(View.GONE);
-        barDownload.setVisibility(View.GONE);
-    }
 }

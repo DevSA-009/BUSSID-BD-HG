@@ -13,55 +13,46 @@ import java.io.RandomAccessFile;
 
 /**
  * ObbProtector — Damage/repair bytes + rename + optional encrypt/decrypt patch OBB.
- *
+ * <p>
  * DAMAGE FLOW (onStop / BussidApp backup):
- *  1. Damage bytes at GUID + asset offsets (write zeros)
- *  2. If ENABLE_PATCH_OBB_ENCRYPTION → encrypt file
- *  3. Rename → .{encryptedSeed}  (dot-prefixed hidden name)
- *
+ * 1. Damage bytes at GUID + asset offsets (write zeros)
+ * 2. If ENABLE_PATCH_OBB_ENCRYPTION → encrypt file
+ * 3. Rename → .{encryptedSeed}  (dot-prefixed hidden name)
+ * <p>
  * REPAIR FLOW (onStart — UnityPlayerActivity ONLY):
- *  Case A — hidden file found (.{encryptedSeed}):
- *    1. Rename .hidden → patch_obb_name
- *    2. If ENABLE_PATCH_OBB_ENCRYPTION → decrypt file
- *    3. Repair bytes (write correct GUID + asset strings)
- *    → returns RepairResult.SUCCESS
- *
- *  Case B — patch_obb_name found (damage was missed due to crash/force-kill):
- *    → Skip ALL steps (file is already undamaged + unencrypted)
- *    → returns RepairResult.ALREADY_OK
- *
- *  Case C — neither found:
- *    → returns RepairResult.OBB_MISSING
- *    → UnityPlayerActivity redirects to ActivationActivity for download
+ * Case A — hidden file found (.{encryptedSeed}):
+ * 1. Rename .hidden → patch_obb_name
+ * 2. If ENABLE_PATCH_OBB_ENCRYPTION → decrypt file
+ * 3. Repair bytes (write correct GUID + asset strings)
+ * → returns RepairResult.SUCCESS
+ * <p>
+ * Case B — patch_obb_name found (damage was missed due to crash/force-kill):
+ * → Skip ALL steps (file is already undamaged + unencrypted)
+ * → returns RepairResult.ALREADY_OK
+ * <p>
+ * Case C — neither found:
+ * → returns RepairResult.OBB_MISSING
+ * → UnityPlayerActivity redirects to ActivationActivity for download
  */
 public class ObbProtector {
 
     private static final String TAG = "BussidBD_ObbProtector";
 
-    private static final byte[] GUID_BYTES  = "unity_obb_guid".getBytes();
+    private static final byte[] GUID_BYTES = "unity_obb_guid".getBytes();
     private static final byte[] ASSET_BYTES = "assets/".getBytes();
-    private static final byte[] ZERO_GUID   = new byte[GUID_BYTES.length];
-    private static final byte[] ZERO_ASSET  = new byte[ASSET_BYTES.length];
+    private static final byte[] ZERO_GUID = new byte[GUID_BYTES.length];
+    private static final byte[] ZERO_ASSET = new byte[ASSET_BYTES.length];
 
-    public enum RepairResult {
-        /** Hidden file found, decrypted, bytes repaired. Game can run. */
-        SUCCESS,
-        /** Patch OBB already in visible undamaged state (crash/kill missed damage). Game can run. */
-        ALREADY_OK,
-        /** Neither hidden nor patch file found. Need to download from server. */
-        OBB_MISSING
-    }
-
-    private final Context   ctx;
-    private final long      guidOffset;
-    private final long      assetOffset;
+    private final Context ctx;
+    private final long guidOffset;
+    private final long assetOffset;
     private final ObbCipher cipher;
 
     public ObbProtector(Context ctx, String guidOffsetHex, String assetOffsetHex) {
-        this.ctx         = ctx.getApplicationContext();
-        this.guidOffset  = parseHex(guidOffsetHex);
+        this.ctx = ctx.getApplicationContext();
+        this.guidOffset = parseHex(guidOffsetHex);
         this.assetOffset = parseHex(assetOffsetHex);
-        this.cipher      = new ObbCipher(ctx);
+        this.cipher = new ObbCipher(ctx);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -70,9 +61,9 @@ public class ObbProtector {
      * REPAIR: called from UnityPlayerActivity.onStart() only.
      * See class javadoc for Case A / B / C logic.
      */
-    public RepairResult repairAndShow() {
+    public void repairAndShow() {
         File hidden = getHiddenFile();
-        File patch  = getPatchFile();
+        File patch = getPatchFile();
 
         // Case A: hidden file found → normal repair flow
         if (hidden.exists()) {
@@ -81,7 +72,7 @@ public class ObbProtector {
             if (!renamed) {
                 Log.e(TAG, "repair: rename hidden→patch failed");
                 ToastUtil.show(ctx, "OBB rename failed");
-                return RepairResult.OBB_MISSING;
+                return;
             }
             Log.d(TAG, "repair: renamed hidden→patch");
 
@@ -90,7 +81,7 @@ public class ObbProtector {
                 if (!cipher.decrypt(patch)) {
                     Log.e(TAG, "repair: decrypt failed");
                     ToastUtil.show(ctx, "OBB decrypt failed");
-                    return RepairResult.OBB_MISSING;
+                    return;
                 }
             }
 
@@ -98,7 +89,7 @@ public class ObbProtector {
             repairBytes(patch);
             ToastUtil.show(ctx, "OBB ready");
             Log.d(TAG, "repairAndShow: SUCCESS");
-            return RepairResult.SUCCESS;
+            return;
         }
 
         // Case B: patch file already visible (damage was missed — crash or force-kill)
@@ -106,12 +97,11 @@ public class ObbProtector {
         if (patch.exists()) {
             Log.d(TAG, "repairAndShow: ALREADY_OK — patch OBB undamaged from previous session");
             ToastUtil.show(ctx, "OBB ready");
-            return RepairResult.ALREADY_OK;
+            return;
         }
 
         // Case C: neither found
         Log.w(TAG, "repairAndShow: OBB_MISSING");
-        return RepairResult.OBB_MISSING;
     }
 
     /**
@@ -121,7 +111,7 @@ public class ObbProtector {
      * Step 3: rename patch → .hidden
      */
     public void damageAndHide() {
-        File patch  = getPatchFile();
+        File patch = getPatchFile();
         File hidden = getHiddenFile();
 
         // Only operate if patch file exists (if already hidden, nothing to do)
@@ -151,17 +141,27 @@ public class ObbProtector {
         ToastUtil.show(ctx, "OBB protected");
     }
 
-    /** Check if patch OBB exists under either name. */
-    public boolean isPatchObbPresent() {
-        return getPatchFile().exists() || getHiddenFile().exists();
+    /**
+     * Check if patch OBB exists under either name.
+     */
+    public boolean isPatchObbNeeded() {
+        return !getPatchFile().exists() && !getHiddenFile().exists();
     }
 
-    /** Delete patch OBB under both names before re-downloading. */
+    /**
+     * Delete patch OBB under both names before re-downloading.
+     */
     public void deletePatchObb() {
         File p = getPatchFile();
         File h = getHiddenFile();
-        if (p.exists()) { p.delete(); Log.d(TAG, "deleted: " + p.getName()); }
-        if (h.exists()) { h.delete(); Log.d(TAG, "deleted: " + h.getName()); }
+        if (p.exists()) {
+            p.delete();
+            Log.d(TAG, "deleted: " + p.getName());
+        }
+        if (h.exists()) {
+            h.delete();
+            Log.d(TAG, "deleted: " + h.getName());
+        }
     }
 
     public File getTempDownloadFile() {
@@ -179,26 +179,33 @@ public class ObbProtector {
     // ── Byte operations ───────────────────────────────────────────────────────
 
     private void repairBytes(File file) {
-        if (!canOperate(file)) { Log.w(TAG, "repairBytes: cannot operate"); return; }
-        writeBytes(file, guidOffset,  GUID_BYTES);
+        if (cannotOperate(file)) {
+            Log.w(TAG, "repairBytes: cannot operate");
+            return;
+        }
+        writeBytes(file, guidOffset, GUID_BYTES);
         writeBytes(file, assetOffset, ASSET_BYTES);
         Log.d(TAG, "bytes repaired");
     }
 
     private void damageBytes(File file) {
-        if (!canOperate(file)) { Log.w(TAG, "damageBytes: cannot operate"); return; }
-        writeBytes(file, guidOffset,  ZERO_GUID);
+        if (cannotOperate(file)) {
+            Log.w(TAG, "damageBytes: cannot operate");
+            return;
+        }
+        writeBytes(file, guidOffset, ZERO_GUID);
         writeBytes(file, assetOffset, ZERO_ASSET);
         Log.d(TAG, "bytes damaged");
     }
 
-    private boolean canOperate(File file) {
-        return file != null && file.exists() && guidOffset >= 0 && assetOffset >= 0;
+    private boolean cannotOperate(File file) {
+        return file == null || !file.exists() || guidOffset < 0 || assetOffset < 0;
     }
 
     private void writeBytes(File file, long offset, byte[] data) {
         try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-            raf.seek(offset); raf.write(data);
+            raf.seek(offset);
+            raf.write(data);
         } catch (Exception e) {
             Log.e(TAG, "writeBytes @ " + offset + ": " + e.getMessage());
         }
@@ -210,7 +217,7 @@ public class ObbProtector {
             dir = new File(ctx.getObbDir().getParentFile(), AppConfig.getGamePackage(ctx));
         } else {
             dir = new File(Environment.getExternalStorageDirectory(),
-                           "Android/obb/" + AppConfig.getGamePackage(ctx));
+                    "Android/obb/" + AppConfig.getGamePackage(ctx));
         }
         if (!dir.exists()) dir.mkdirs();
         return dir;
@@ -218,7 +225,10 @@ public class ObbProtector {
 
     private static long parseHex(String hex) {
         if (hex == null || hex.isEmpty()) return -1;
-        try { return Long.parseLong(hex.trim().replaceAll("(?i)^0x", ""), 16); }
-        catch (NumberFormatException e) { return -1; }
+        try {
+            return Long.parseLong(hex.trim().replaceAll("(?i)^0x", ""), 16);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 }

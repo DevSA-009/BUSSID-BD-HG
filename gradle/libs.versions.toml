@@ -1,32 +1,33 @@
 [versions]
 agp = "8.4.0"
 junit = "4.13.2"
-junitVersion = "1.3.0"
-espressoCore = "3.7.0"
-appcompat = "1.7.1"
-material = "1.14.0"
-activityKtx = "1.13.0"
-constraintlayout = "2.2.1"
-materialVersion = "1.12.0"
-lifecycleProcess = "2.10.0"
-lifecycleCommonJava8 = "2.8.7"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.0"
+material = "1.12.0"
+constraintlayout = "2.2.0"
+lifecycle = "2.8.7"
 okhttp = "4.12.0"
 gson = "2.11.0"
 
 [libraries]
+# Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-appcompat = { group = "androidx.appcompat", name = "appcompat", version = "1.7.0" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
+
+# UI & UX
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
-google-material = { group = "com.google.android.material", name = "material", version.ref = "materialVersion" }
-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version = "2.8.7" }
-lifecycle-common-java8 = { group = "androidx.lifecycle", name = "lifecycle-common-java8", version.ref = "lifecycleCommonJava8" }
+google-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+# Lifecycle (Java 8 এর জন্য বেস্ট এবং আধুনিক নিয়ম)
+lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }
+lifecycle-common-java8 = { group = "androidx.lifecycle", name = "lifecycle-common-java8", version.ref = "lifecycle" }
+
+# Networking & JSON
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-

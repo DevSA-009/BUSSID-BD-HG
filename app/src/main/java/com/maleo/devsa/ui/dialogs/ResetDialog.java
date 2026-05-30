@@ -42,7 +42,7 @@ public class ResetDialog extends BaseDialog {
 
         // Explicitly set label — prevents empty button if layout has no hardcoded text
         btnCancel.setText(R.string.btn_cancel);
-        btnSubmit.setText(R.string.reset_btn);
+        btnSubmit.setText(R.string.btn_reset);
 
         btnCancel.setOnClickListener(v -> {
             if (onCancelListener != null) onCancelListener.onCancel();
@@ -50,7 +50,7 @@ public class ResetDialog extends BaseDialog {
         btnSubmit.setOnClickListener(v -> {
             String key = etKey.getText().toString().trim();
             if (TextUtils.isEmpty(key)) {
-                etKey.setError(getContext().getString(R.string.err_reset_key_empty));
+                etKey.setError(getContext().getString(R.string.reset_dialog_title));
                 return;
             }
             if (onResetListener != null) onResetListener.onReset(key);
